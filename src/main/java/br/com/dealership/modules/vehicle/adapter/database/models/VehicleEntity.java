@@ -15,7 +15,7 @@ public class VehicleEntity {
     private String model;
     private int year;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String vin;
 
     private String color;
