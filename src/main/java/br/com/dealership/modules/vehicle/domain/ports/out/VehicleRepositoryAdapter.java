@@ -1,0 +1,41 @@
+package br.com.dealership.modules.vehicle.domain.ports.out;
+
+import br.com.dealership.modules.vehicle.adapter.database.repositories.VehicleRepository;
+import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
+import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
+import br.com.dealership.modules.vehicle.mapper.VehicleMapper;
+
+import java.util.List;
+import java.util.Optional;
+
+public class VehicleRepositoryAdapter implements VehicleRepositoryPort {
+    private final VehicleRepository vehicleRepository;
+    private final VehicleMapper vehicleMapper;
+
+    public VehicleRepositoryAdapter(VehicleRepository vehicleRepository, VehicleMapper vehicleMapper) {
+        this.vehicleRepository = vehicleRepository;
+        this.vehicleMapper = vehicleMapper;
+    }
+
+    @Override
+    public List<Vehicle> getAllByStatus(VehicleStatus status) {
+        return vehicleRepository.findAllByStatus(status).stream()
+                .map(vehicleMapper::mapToDomain)
+                .toList();
+    }
+
+    @Override
+    public Optional<Vehicle> getVehicleByVin(String id) {
+        return vehicleRepository.findByVin(id)
+                .map(vehicleMapper::mapToDomain);
+    }
+
+    @Override
+    public Vehicle saveVehicle(Vehicle vehicle) {
+        return vehicleMapper.mapToDomain(
+                vehicleRepository.save(
+                        vehicleMapper.mapToEntity(vehicle)
+                )
+        );
+    }
+}
