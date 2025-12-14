@@ -1,4 +1,4 @@
-package br.com.dealership.modules.vehicle.model;
+package br.com.dealership.modules.vehicle.domain.entities;
 
 import java.util.UUID;
 
