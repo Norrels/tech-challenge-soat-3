@@ -1,6 +1,7 @@
 package br.com.dealership.modules.vehicle.application.usecases;
 
 import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
+import br.com.dealership.modules.vehicle.domain.exception.DuplicateVinException;
 import br.com.dealership.modules.vehicle.domain.ports.out.VehicleRepositoryPort;
 
 import java.util.UUID;
@@ -20,7 +21,7 @@ public class CreateVehicleUseCase {
         }
 
         if (vehicleRepositoryPort.getVehicleByVin(vehicle.getVin()).isPresent()) {
-            throw new IllegalArgumentException("Vehicle with VIN " + vehicle.getVin() + " already exists");
+            throw new DuplicateVinException(vehicle.getVin());
         }
 
         return vehicleRepositoryPort.saveVehicle(vehicle);
