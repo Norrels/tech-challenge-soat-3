@@ -4,10 +4,12 @@ import br.com.dealership.modules.vehicle.adapter.database.repositories.VehicleRe
 import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
 import br.com.dealership.modules.vehicle.mapper.VehicleMapper;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class VehicleRepositoryAdapter implements VehicleRepositoryPort {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
