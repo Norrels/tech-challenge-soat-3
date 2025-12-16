@@ -1,0 +1,39 @@
+package br.com.dealership.modules.vehicle.mapper;
+
+import br.com.dealership.modules.vehicle.adapter.database.models.VehicleEntity;
+import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
+
+public class VehicleMapper {
+
+    public Vehicle mapToDomain(VehicleEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return new Vehicle(
+                entity.getId(),
+                entity.getMake(),
+                entity.getModel(),
+                entity.getYear(),
+                entity.getVin(),
+                entity.getColor(),
+                entity.getStatus()
+        );
+    }
+
+    public VehicleEntity mapToEntity(Vehicle vehicle) {
+        if (vehicle == null) {
+            return null;
+        }
+
+        return new VehicleEntity(
+                vehicle.getId(),
+                vehicle.getMake(),
+                vehicle.getModel(),
+                vehicle.getYear(),
+                vehicle.getVin(),
+                vehicle.getColor(),
+                vehicle.getStatus()
+        );
+    }
+}
