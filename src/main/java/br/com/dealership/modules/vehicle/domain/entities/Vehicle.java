@@ -21,6 +21,28 @@ public class Vehicle {
         this.status = status;
     }
 
+    public void validate() {
+        if (this.make == null || this.getMake().isBlank()) {
+            throw new IllegalArgumentException("Vehicle make cannot be null or empty");
+        }
+
+        if (this.getModel() == null || this.getModel().isBlank()) {
+            throw new IllegalArgumentException("Vehicle model cannot be null or empty");
+        }
+
+        if (this.getYear() <= 0) {
+            throw new IllegalArgumentException("Vehicle year must be positive");
+        }
+
+        if (this.getVin() == null || this.getVin().isBlank()) {
+            throw new IllegalArgumentException("Vehicle VIN cannot be null or empty");
+        }
+
+        if (this.getStatus() == null) {
+            throw new IllegalArgumentException("Vehicle status cannot be null");
+        }
+    }
+
     public UUID getId() {
         return id;
     }

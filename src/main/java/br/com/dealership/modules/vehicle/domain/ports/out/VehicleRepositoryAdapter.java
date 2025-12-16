@@ -4,10 +4,13 @@ import br.com.dealership.modules.vehicle.adapter.database.repositories.VehicleRe
 import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
 import br.com.dealership.modules.vehicle.mapper.VehicleMapper;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+@Repository
 public class VehicleRepositoryAdapter implements VehicleRepositoryPort {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
@@ -27,6 +30,12 @@ public class VehicleRepositoryAdapter implements VehicleRepositoryPort {
     @Override
     public Optional<Vehicle> getVehicleByVin(String id) {
         return vehicleRepository.findByVin(id)
+                .map(vehicleMapper::mapToDomain);
+    }
+
+    @Override
+    public Optional<Vehicle> getVehicleById(UUID id) {
+        return vehicleRepository.findById(id)
                 .map(vehicleMapper::mapToDomain);
     }
 

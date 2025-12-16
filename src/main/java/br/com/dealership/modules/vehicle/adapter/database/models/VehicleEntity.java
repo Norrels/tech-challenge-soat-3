@@ -9,13 +9,14 @@ import java.util.UUID;
 @Table(name = "vehicles")
 public class VehicleEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     private String make;
     private String model;
     private int year;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String vin;
 
     private String color;

@@ -1,7 +1,11 @@
 package br.com.dealership.modules.vehicle.mapper;
 
 import br.com.dealership.modules.vehicle.adapter.database.models.VehicleEntity;
+import br.com.dealership.modules.vehicle.adapter.http.dto.CreateVehicleDTO;
+import br.com.dealership.modules.vehicle.adapter.http.dto.UpdateVehicleDTO;
 import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
+
+import java.util.UUID;
 
 public class VehicleMapper {
 
@@ -34,6 +38,38 @@ public class VehicleMapper {
                 vehicle.getVin(),
                 vehicle.getColor(),
                 vehicle.getStatus()
+        );
+    }
+
+    public Vehicle mapFromCreateDTO(CreateVehicleDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+
+        return new Vehicle(
+                null,
+                dto.getMake(),
+                dto.getModel(),
+                dto.getYear(),
+                dto.getVin(),
+                dto.getColor(),
+                dto.getStatus()
+        );
+    }
+
+    public Vehicle mapFromUpdateDTO(UpdateVehicleDTO dto, String vin) {
+        if (dto == null) {
+            return null;
+        }
+
+        return new Vehicle(
+                null,
+                dto.getMake(),
+                dto.getModel(),
+                dto.getYear(),
+                vin,
+                dto.getColor(),
+                dto.getStatus()
         );
     }
 }
