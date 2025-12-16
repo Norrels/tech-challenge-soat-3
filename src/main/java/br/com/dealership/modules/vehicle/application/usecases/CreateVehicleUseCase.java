@@ -16,10 +16,6 @@ public class CreateVehicleUseCase {
     public Vehicle execute(Vehicle vehicle) {
         vehicle.validate();
 
-        if (vehicle.getId() == null) {
-            vehicle.setId(UUID.randomUUID());
-        }
-
         if (vehicleRepositoryPort.getVehicleByVin(vehicle.getVin()).isPresent()) {
             throw new DuplicateVinException(vehicle.getVin());
         }
