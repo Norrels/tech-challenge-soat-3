@@ -1,9 +1,11 @@
 package br.com.dealership.modules.vehicle.adapter.http;
 
+import br.com.dealership.modules.vehicle.adapter.http.dto.CreateVehicleDTO;
 import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
 import br.com.dealership.modules.vehicle.domain.exception.VehicleNotFoundException;
 import br.com.dealership.modules.vehicle.domain.ports.in.VehicleServicePort;
+import br.com.dealership.modules.vehicle.mapper.VehicleMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -12,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import br.com.dealership.exception.ErrorResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,9 +26,11 @@ import java.util.List;
 public class VehicleController {
 
     private final VehicleServicePort vehicleServicePort;
+    private final VehicleMapper vehicleMapper;
 
-    public VehicleController(VehicleServicePort vehicleServicePort) {
+    public VehicleController(VehicleServicePort vehicleServicePort, VehicleMapper vehicleMapper) {
         this.vehicleServicePort = vehicleServicePort;
+        this.vehicleMapper = vehicleMapper;
     }
 
     @PostMapping()
@@ -47,7 +52,8 @@ public class VehicleController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<Vehicle> createVehicle(@RequestBody Vehicle vehicle) {
+    public ResponseEntity<Vehicle> createVehicle(@Valid @RequestBody CreateVehicleDTO createVehicleDTO) {
+        Vehicle vehicle = vehicleMapper.mapFromCreateDTO(createVehicleDTO);
         Vehicle createdVehicle = vehicleServicePort.createVehicle(vehicle);
         return ResponseEntity.ok(createdVehicle);
     }
