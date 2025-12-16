@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class VehicleRepositoryAdapter implements VehicleRepositoryPort {
@@ -29,6 +30,12 @@ public class VehicleRepositoryAdapter implements VehicleRepositoryPort {
     @Override
     public Optional<Vehicle> getVehicleByVin(String id) {
         return vehicleRepository.findByVin(id)
+                .map(vehicleMapper::mapToDomain);
+    }
+
+    @Override
+    public Optional<Vehicle> getVehicleById(UUID id) {
+        return vehicleRepository.findById(id)
                 .map(vehicleMapper::mapToDomain);
     }
 
