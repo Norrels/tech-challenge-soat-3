@@ -1,6 +1,7 @@
 package br.com.dealership.modules.vehicle.adapter.http;
 
 import br.com.dealership.modules.vehicle.adapter.http.dto.CreateVehicleDTO;
+import br.com.dealership.modules.vehicle.adapter.http.dto.UpdateVehicleDTO;
 import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
 import br.com.dealership.modules.vehicle.domain.exception.VehicleNotFoundException;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/vehicles")
@@ -106,6 +108,34 @@ public class VehicleController {
     public ResponseEntity<List<Vehicle>> getAllSoldVehicles() {
         List<Vehicle> soldVehicles = vehicleServicePort.getAllVehiclesByStatus(VehicleStatus.SOLD);
         return ResponseEntity.ok(soldVehicles);
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update a vehicle", description = "Updates an existing vehicle by its ID")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Vehicle updated successfully",
+                    content = @Content(schema = @Schema(implementation = Vehicle.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid vehicle data",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Vehicle not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    public ResponseEntity<Vehicle> updateVehicle(
+            @Parameter(description = "Vehicle ID") @PathVariable UUID id,
+            @Valid @RequestBody UpdateVehicleDTO updateVehicleDTO) {
+
+        Vehicle vehicle = vehicleMapper.mapFromUpdateDTO(updateVehicleDTO, null);
+        Vehicle updatedVehicle = vehicleServicePort.updateVehicle(id, vehicle);
+        return ResponseEntity.ok(updatedVehicle);
     }
 
 
