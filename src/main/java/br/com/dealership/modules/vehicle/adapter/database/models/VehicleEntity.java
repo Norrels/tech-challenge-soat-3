@@ -3,6 +3,7 @@ package br.com.dealership.modules.vehicle.adapter.database.models;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -24,10 +25,12 @@ public class VehicleEntity {
     @Enumerated(EnumType.STRING)
     private VehicleStatus status;
 
+    private BigDecimal price;
+
     public VehicleEntity() {
     }
 
-    public VehicleEntity(UUID id, String make, String model, int year, String vin, String color, VehicleStatus status) {
+    public VehicleEntity(UUID id, String make, String model, int year, String vin, String color, VehicleStatus status, BigDecimal price) {
         this.id = id;
         this.make = make;
         this.model = model;
@@ -91,5 +94,13 @@ public class VehicleEntity {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 }
