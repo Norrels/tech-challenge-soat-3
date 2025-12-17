@@ -1,6 +1,6 @@
-package br.com.dealership.modules.sale.model;
+package br.com.dealership.modules.sale.domain.entities;
 
-import br.com.dealership.modules.sale.model.valueobject.CPF;
+import br.com.dealership.modules.sale.domain.entities.valueobjects.CPF;
 
 import java.util.UUID;
 
@@ -12,6 +12,7 @@ public class SaleOrder {
     private Double salePrice;
     private UUID vihicleId;
     private SaleStatus status;
+
 
     public SaleOrder(Long id, String customerName, CPF customerCpf, String vehicleVin, Double salePrice, UUID vihicleId, SaleStatus status) {
         this.id = id;
