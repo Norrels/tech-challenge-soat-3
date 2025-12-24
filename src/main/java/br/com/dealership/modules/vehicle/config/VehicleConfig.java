@@ -1,10 +1,10 @@
 package br.com.dealership.modules.vehicle.config;
 
 import br.com.dealership.modules.vehicle.application.services.VehicleService;
-import br.com.dealership.modules.vehicle.application.usecases.CreateVehicleUseCase;
-import br.com.dealership.modules.vehicle.application.usecases.GetVehicleByStatusUseCase;
-import br.com.dealership.modules.vehicle.application.usecases.GetVehicleByVinUseCase;
-import br.com.dealership.modules.vehicle.application.usecases.UpdateVehicleUseCase;
+import br.com.dealership.modules.vehicle.application.useCases.CreateVehicleUseCase;
+import br.com.dealership.modules.vehicle.application.useCases.GetVehicleByStatusUseCase;
+import br.com.dealership.modules.vehicle.application.useCases.GetVehicleByVinUseCase;
+import br.com.dealership.modules.vehicle.application.useCases.UpdateVehicleUseCase;
 import br.com.dealership.modules.vehicle.domain.ports.out.VehicleRepositoryPort;
 import br.com.dealership.modules.vehicle.mapper.VehicleMapper;
 import org.springframework.context.annotation.Bean;

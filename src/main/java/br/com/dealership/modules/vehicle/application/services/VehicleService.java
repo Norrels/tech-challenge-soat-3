@@ -1,9 +1,9 @@
 package br.com.dealership.modules.vehicle.application.services;
 
-import br.com.dealership.modules.vehicle.application.usecases.CreateVehicleUseCase;
-import br.com.dealership.modules.vehicle.application.usecases.GetVehicleByStatusUseCase;
-import br.com.dealership.modules.vehicle.application.usecases.GetVehicleByVinUseCase;
-import br.com.dealership.modules.vehicle.application.usecases.UpdateVehicleUseCase;
+import br.com.dealership.modules.vehicle.application.useCases.CreateVehicleUseCase;
+import br.com.dealership.modules.vehicle.application.useCases.GetVehicleByStatusUseCase;
+import br.com.dealership.modules.vehicle.application.useCases.GetVehicleByVinUseCase;
+import br.com.dealership.modules.vehicle.application.useCases.UpdateVehicleUseCase;
 import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
 import br.com.dealership.modules.vehicle.domain.ports.in.VehicleServicePort;

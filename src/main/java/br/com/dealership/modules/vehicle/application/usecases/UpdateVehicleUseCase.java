@@ -1,4 +1,4 @@
-package br.com.dealership.modules.vehicle.application.usecases;
+package br.com.dealership.modules.vehicle.application.useCases;
 
 import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
 import br.com.dealership.modules.vehicle.domain.exception.VehicleNotFoundException;

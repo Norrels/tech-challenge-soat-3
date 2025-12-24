@@ -1,10 +1,8 @@
-package br.com.dealership.modules.vehicle.application.usecases;
+package br.com.dealership.modules.vehicle.application.useCases;
 
 import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
 import br.com.dealership.modules.vehicle.domain.exception.DuplicateVinException;
 import br.com.dealership.modules.vehicle.domain.ports.out.VehicleRepositoryPort;
-
-import java.util.UUID;
 
 public class CreateVehicleUseCase {
     private final VehicleRepositoryPort vehicleRepositoryPort;
