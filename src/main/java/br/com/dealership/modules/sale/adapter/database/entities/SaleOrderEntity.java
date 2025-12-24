@@ -1,11 +1,9 @@
 package br.com.dealership.modules.sale.adapter.database.entities;
 
+import br.com.dealership.modules.sale.adapter.database.converters.CPFConverter;
 import br.com.dealership.modules.sale.domain.entities.SaleStatus;
 import br.com.dealership.modules.sale.domain.entities.valueobjects.CPF;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.util.UUID;
 
@@ -13,12 +11,14 @@ import java.util.UUID;
 @Table(name = "sale_orders")
 public class SaleOrderEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "customer_name", nullable = false)
     private String customerName;
 
     @Column(name = "customer_cpf", nullable = false)
+    @Convert(converter = CPFConverter.class)
     private CPF customerCpf;
 
     @Column(name = "vehicle_vin", nullable = false)
@@ -30,8 +30,12 @@ public class SaleOrderEntity {
     @Column(name = "vehicle_id", nullable = false)
     private UUID vehicleId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private SaleStatus status;
 
+    public SaleOrderEntity() {
+    }
 
     public SaleOrderEntity(Long id, String customerName, CPF customerCpf, String vehicleVin, Double salePrice, UUID vehicleId, SaleStatus status) {
         this.id = id;

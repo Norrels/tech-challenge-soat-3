@@ -1,6 +1,7 @@
 package br.com.dealership.modules.sale.domain.entities;
 
 import br.com.dealership.modules.sale.domain.entities.valueobjects.CPF;
+import br.com.dealership.modules.sale.domain.exception.InvalidSaleException;
 
 import java.util.UUID;
 
@@ -78,5 +79,31 @@ public class SaleOrder {
 
     public void setStatus(SaleStatus status) {
         this.status = status;
+    }
+
+    public void validate() {
+        if (customerName == null || customerName.isBlank()) {
+            throw new InvalidSaleException("Customer name is required");
+        }
+
+        if (customerCpf == null) {
+            throw new InvalidSaleException("Customer CPF is required");
+        }
+
+        if (vehicleVin == null || vehicleVin.isBlank()) {
+            throw new InvalidSaleException("Vehicle VIN is required");
+        }
+
+        if (vihicleId == null) {
+            throw new InvalidSaleException("Vehicle ID is required");
+        }
+
+        if (salePrice == null || salePrice <= 0) {
+            throw new InvalidSaleException("Sale price must be greater than zero");
+        }
+
+        if (status == null) {
+            throw new InvalidSaleException("Sale status is required");
+        }
     }
 }

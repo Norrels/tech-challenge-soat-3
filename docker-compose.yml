@@ -17,15 +17,24 @@ services:
     networks:
       - spring-network
   db:
+    env_file:
+      - .env
     container_name: dealership-db
-    image: postgres
+    image: postgres:alpine
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
-      - 5432:5432
+      - "5432:5432"
+    networks:
+      - spring-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
 networks:
   spring-network:
     driver: bridge
+
+volumes:
+  postgres_data:
