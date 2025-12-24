@@ -21,7 +21,8 @@ public class VehicleMapper {
                 entity.getYear(),
                 entity.getVin(),
                 entity.getColor(),
-                entity.getStatus()
+                entity.getStatus(),
+                entity.getPrice()
         );
     }
 
@@ -37,7 +38,8 @@ public class VehicleMapper {
                 vehicle.getYear(),
                 vehicle.getVin(),
                 vehicle.getColor(),
-                vehicle.getStatus()
+                vehicle.getStatus(),
+                vehicle.getPrice()
         );
     }
 
@@ -53,7 +55,8 @@ public class VehicleMapper {
                 dto.getYear(),
                 dto.getVin(),
                 dto.getColor(),
-                dto.getStatus()
+                dto.getStatus(),
+                dto.getPrice()
         );
     }
 
@@ -69,7 +72,8 @@ public class VehicleMapper {
                 dto.getYear(),
                 vin,
                 dto.getColor(),
-                dto.getStatus()
+                dto.getStatus(),
+                dto.getPrice()
         );
     }
 }

@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
+
 @Schema(description = "Data Transfer Object for updating a vehicle")
 public class UpdateVehicleDTO {
 
@@ -28,6 +30,11 @@ public class UpdateVehicleDTO {
     @NotNull(message = "Vehicle status is required")
     @Schema(description = "Current status of the vehicle", example = "AVAILABLE", required = true)
     private VehicleStatus status;
+
+    @Min(value = 0, message = "Vehicle price must be non-negative")
+    @NotNull(message = "Vehicle price is required")
+    @Schema(description = "Price of the vehicle", example = "25000.00", required = true)
+    private BigDecimal price;
 
     public UpdateVehicleDTO() {
     }
@@ -78,5 +85,13 @@ public class UpdateVehicleDTO {
 
     public void setStatus(VehicleStatus status) {
         this.status = status;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 }

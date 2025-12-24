@@ -1,5 +1,6 @@
 package br.com.dealership.modules.vehicle.domain.entities;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class Vehicle {
@@ -10,8 +11,9 @@ public class Vehicle {
     private String vin;
     private String color;
     private VehicleStatus status;
+    private BigDecimal price;
 
-    public Vehicle(UUID id, String make, String model, int year, String vin, String color, VehicleStatus status) {
+    public Vehicle(UUID id, String make, String model, int year, String vin, String color, VehicleStatus status, BigDecimal price) {
         this.id = id;
         this.make = make;
         this.model = model;
@@ -19,11 +21,16 @@ public class Vehicle {
         this.vin = vin;
         this.color = color;
         this.status = status;
+        this.price = price;
     }
 
     public void validate() {
         if (this.make == null || this.getMake().isBlank()) {
             throw new IllegalArgumentException("Vehicle make cannot be null or empty");
+        }
+
+        if (this.price == null || this.price.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Vehicle price cannot be null or negative");
         }
 
         if (this.getModel() == null || this.getModel().isBlank()) {
@@ -97,5 +104,13 @@ public class Vehicle {
 
     public void setStatus(VehicleStatus status) {
         this.status = status;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 }

@@ -1,4 +1,4 @@
-package br.com.dealership.modules.sale.model;
+package br.com.dealership.modules.sale.domain.entities;
 
 public enum SaleStatus {
     PENDING,

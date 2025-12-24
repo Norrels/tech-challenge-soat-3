@@ -1,4 +1,4 @@
-package br.com.dealership.modules.sale.model.valueobject;
+package br.com.dealership.modules.sale.domain.entities.valueobjects;
 
 import java.util.Objects;
 

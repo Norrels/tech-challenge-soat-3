@@ -1,5 +1,6 @@
-package br.com.dealership.modules.sale.model.valueobject;
+package br.com.dealership.modules.sale.domain.entities;
 
+import br.com.dealership.modules.sale.domain.entities.valueobjects.CPF;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
