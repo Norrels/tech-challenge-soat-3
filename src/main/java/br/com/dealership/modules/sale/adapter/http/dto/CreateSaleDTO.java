@@ -28,10 +28,6 @@ public class CreateSaleDTO {
     @Schema(description = "Sale price", example = "45000.00", required = true)
     private Double salePrice;
 
-    @NotNull(message = "Vehicle ID is required")
-    @Schema(description = "Vehicle ID", example = "123e4567-e89b-12d3-a456-426614174000", required = true)
-    private UUID vehicleId;
-
     @Schema(description = "Sale status", example = "PENDING")
     private SaleStatus status;
 
@@ -43,7 +39,6 @@ public class CreateSaleDTO {
         this.customerCpf = customerCpf;
         this.vehicleVin = vehicleVin;
         this.salePrice = salePrice;
-        this.vehicleId = vehicleId;
         this.status = status;
     }
 
@@ -77,14 +72,6 @@ public class CreateSaleDTO {
 
     public void setSalePrice(Double salePrice) {
         this.salePrice = salePrice;
-    }
-
-    public UUID getVehicleId() {
-        return vehicleId;
-    }
-
-    public void setVehicleId(UUID vehicleId) {
-        this.vehicleId = vehicleId;
     }
 
     public SaleStatus getStatus() {
