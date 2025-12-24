@@ -3,10 +3,12 @@ package br.com.dealership.modules.sale.adapter.database.repositories;
 import br.com.dealership.modules.sale.domain.entities.SaleOrder;
 import br.com.dealership.modules.sale.domain.ports.out.SaleRepositoryPort;
 import br.com.dealership.modules.sale.mapper.SaleMapper;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
 
+@Repository
 public class SaleRepositoryAdapter implements SaleRepositoryPort {
     private final SaleRepository repository;
     private final SaleMapper saleMapper;
@@ -24,7 +26,14 @@ public class SaleRepositoryAdapter implements SaleRepositoryPort {
     }
 
     @Override
-    public List<SaleOrder> getAllSales(String customerCpf) {
+    public List<SaleOrder> getAllSales() {
+        return repository.findAll().stream()
+                .map(saleMapper::mapToDomain)
+                .toList();
+    }
+
+    @Override
+    public List<SaleOrder> getAllSalesByCustomerCpf(String customerCpf) {
         return repository.findAllByCustomerCpf(customerCpf).stream()
                 .map(saleMapper::mapToDomain)
                 .toList();
@@ -32,7 +41,7 @@ public class SaleRepositoryAdapter implements SaleRepositoryPort {
 
     @Override
     public SaleOrder getSaleById(String id) {
-        return repository.findById(UUID.fromString(id))
+        return repository.findById(Long.getLong(id))
                 .map(saleMapper::mapToDomain)
                 .orElse(null);
     }

@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface SaleRepositoryPort {
     SaleOrder save(SaleOrder saleOrder);
-    List<SaleOrder> getAllSales(String cpfClient);
+    List<SaleOrder> getAllSales();
+    List<SaleOrder> getAllSalesByCustomerCpf(String cpfClient);
     SaleOrder getSaleById(String id);
 }

@@ -25,6 +25,6 @@ public class FindAllSaleByCustomerCPFUseCase {
             throw new InvalidSaleException("Invalid CPF format: " + e.getMessage());
         }
 
-        return saleRepositoryPort.getAllSales(customerCpf);
+        return saleRepositoryPort.getAllSalesByCustomerCpf(customerCpf);
     }
 }
