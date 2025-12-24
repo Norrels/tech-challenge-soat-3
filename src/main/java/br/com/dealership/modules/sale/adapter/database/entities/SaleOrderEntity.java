@@ -1,4 +1,4 @@
-package br.com.dealership.modules.sale.adapter.database;
+package br.com.dealership.modules.sale.adapter.database.entities;
 
 import br.com.dealership.modules.sale.domain.entities.SaleStatus;
 import br.com.dealership.modules.sale.domain.entities.valueobjects.CPF;
