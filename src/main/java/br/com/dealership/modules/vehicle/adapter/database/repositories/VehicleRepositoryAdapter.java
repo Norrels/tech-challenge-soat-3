@@ -1,8 +1,8 @@
-package br.com.dealership.modules.vehicle.domain.ports.out;
+package br.com.dealership.modules.vehicle.adapter.database.repositories;
 
-import br.com.dealership.modules.vehicle.adapter.database.repositories.VehicleRepository;
 import br.com.dealership.modules.vehicle.domain.entities.Vehicle;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
+import br.com.dealership.modules.vehicle.domain.ports.out.VehicleRepositoryPort;
 import br.com.dealership.modules.vehicle.mapper.VehicleMapper;
 import org.springframework.stereotype.Repository;
 
