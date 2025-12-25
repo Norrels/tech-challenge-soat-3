@@ -43,7 +43,7 @@ public class SaleRepositoryAdapter implements SaleRepositoryPort {
 
     @Override
     public SaleOrder getSaleById(String id) {
-        return repository.findById(Long.getLong(id))
+        return repository.findById(Long.parseLong(id))
                 .map(saleMapper::mapToDomain)
                 .orElse(null);
     }
