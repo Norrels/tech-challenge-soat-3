@@ -1,5 +1,8 @@
 package br.com.dealership.exception;
 
+import br.com.dealership.modules.sale.domain.entities.SaleStatus;
+import br.com.dealership.modules.sale.domain.exception.InvalidSaleException;
+import br.com.dealership.modules.sale.domain.exception.SaleNotFoundException;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
 import br.com.dealership.modules.vehicle.domain.exception.DuplicateVinException;
 import br.com.dealership.modules.vehicle.domain.exception.InvalidVehicleException;
@@ -37,6 +40,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+    @ExceptionHandler(SaleNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleSaleNotFoundException(
+            SaleNotFoundException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Not Found",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
     @ExceptionHandler(DuplicateVinException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateVinException(
             DuplicateVinException ex,
@@ -55,6 +73,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidVehicleException.class)
     public ResponseEntity<ErrorResponse> handleInvalidVehicleException(
             InvalidVehicleException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidSaleException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSaleException(
+            InvalidSaleException ex,
             HttpServletRequest request) {
 
         ErrorResponse errorResponse = new ErrorResponse(
@@ -161,6 +194,8 @@ public class GlobalExceptionHandler {
         if (ex.getMessage() != null) {
             if (ex.getMessage().contains("VehicleStatus")) {
                 message = "Invalid value for vehicle status field, allowed values are: " + enumValues(VehicleStatus.values());
+            } else if (ex.getMessage().contains("SaleStatus")) {
+                message = "Invalid value for sale status field, allowed values are: " + enumValues(SaleStatus.values());
             } else if (ex.getMessage().contains("JSON parse error")) {
                 message = "Invalid JSON format in request body";
             } else if (ex.getMessage().contains("Required request body is missing")) {
