@@ -7,6 +7,7 @@ import br.com.dealership.modules.sale.application.useCases.FindAllSalesUseCase;
 import br.com.dealership.modules.sale.application.useCases.FindSaleByIdUseCase;
 import br.com.dealership.modules.sale.domain.ports.out.SaleRepositoryPort;
 import br.com.dealership.modules.sale.mapper.SaleMapper;
+import br.com.dealership.modules.shared.useCases.FindAvaliableVehicleByIdUseCasePort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -42,7 +43,8 @@ public class SaleConfig {
     public SaleService saleService(CreateSaleUseCase createSaleUseCase,
                                    FindSaleByIdUseCase findSaleByIdUseCase,
                                    FindAllSalesUseCase findAllSalesUseCase,
-                                   FindAllSaleByCustomerCPFUseCase findAllSaleByCustomerCPFUseCase) {
-        return new SaleService(createSaleUseCase, findSaleByIdUseCase, findAllSalesUseCase, findAllSaleByCustomerCPFUseCase);
+                                   FindAllSaleByCustomerCPFUseCase findAllSaleByCustomerCPFUseCase,
+                                   FindAvaliableVehicleByIdUseCasePort findAvaliableVehicleByIdUseCase) {
+        return new SaleService(createSaleUseCase, findSaleByIdUseCase, findAllSalesUseCase, findAllSaleByCustomerCPFUseCase, findAvaliableVehicleByIdUseCase);
     }
 }
