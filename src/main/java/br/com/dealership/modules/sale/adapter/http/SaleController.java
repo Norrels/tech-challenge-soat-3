@@ -1,8 +1,10 @@
 package br.com.dealership.modules.sale.adapter.http;
 
 import br.com.dealership.exception.ErrorResponse;
+import br.com.dealership.modules.sale.adapter.http.dto.CreateSaleDTO;
 import br.com.dealership.modules.sale.application.services.SaleService;
 import br.com.dealership.modules.sale.domain.entities.SaleOrder;
+import br.com.dealership.modules.sale.mapper.SaleMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,9 +22,11 @@ import java.util.List;
 @Tag(name = "Sales", description = "Sales management endpoints")
 public class SaleController {
     private final SaleService saleService;
+    private final SaleMapper saleMapper;
 
-    public SaleController(SaleService saleService) {
+    public SaleController(SaleService saleService, SaleMapper saleMapper) {
         this.saleService = saleService;
+        this.saleMapper = saleMapper;
     }
 
     @PostMapping()
@@ -39,8 +43,8 @@ public class SaleController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<SaleOrder> createSaleOrder(@RequestBody SaleOrder saleOrder) {
-        return ResponseEntity.ok(saleService.createSale(saleOrder));
+    public ResponseEntity<SaleOrder> createSaleOrder(@RequestBody CreateSaleDTO CreateSaleDTO) {
+        return ResponseEntity.ok(saleService.createSale(saleMapper.mapFromCreateDTO(CreateSaleDTO)));
     }
 
     @GetMapping("/{id}")

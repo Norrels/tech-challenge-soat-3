@@ -55,7 +55,7 @@ public class SaleMapper {
                 cpf,
                 dto.getVehicleVin(),
                 dto.getSalePrice(),
-                dto.getVehicleId(),
+                null,
                 status
         );
     }

@@ -1,6 +1,7 @@
 package br.com.dealership.modules.sale.adapter.database.repositories;
 
 import br.com.dealership.modules.sale.domain.entities.SaleOrder;
+import br.com.dealership.modules.sale.domain.entities.valueobjects.CPF;
 import br.com.dealership.modules.sale.domain.ports.out.SaleRepositoryPort;
 import br.com.dealership.modules.sale.mapper.SaleMapper;
 import org.springframework.stereotype.Repository;
@@ -34,14 +35,15 @@ public class SaleRepositoryAdapter implements SaleRepositoryPort {
 
     @Override
     public List<SaleOrder> getAllSalesByCustomerCpf(String customerCpf) {
-        return repository.findAllByCustomerCpf(customerCpf).stream()
+        CPF cpf = new CPF(customerCpf);
+        return repository.findAllByCustomerCpf(cpf).stream()
                 .map(saleMapper::mapToDomain)
                 .toList();
     }
 
     @Override
     public SaleOrder getSaleById(String id) {
-        return repository.findById(Long.getLong(id))
+        return repository.findById(Long.parseLong(id))
                 .map(saleMapper::mapToDomain)
                 .orElse(null);
     }

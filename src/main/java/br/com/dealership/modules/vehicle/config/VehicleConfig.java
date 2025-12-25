@@ -1,10 +1,7 @@
 package br.com.dealership.modules.vehicle.config;
 
 import br.com.dealership.modules.vehicle.application.services.VehicleService;
-import br.com.dealership.modules.vehicle.application.usecases.CreateVehicleUseCase;
-import br.com.dealership.modules.vehicle.application.usecases.GetVehicleByStatusUseCase;
-import br.com.dealership.modules.vehicle.application.usecases.GetVehicleByVinUseCase;
-import br.com.dealership.modules.vehicle.application.usecases.UpdateVehicleUseCase;
+import br.com.dealership.modules.vehicle.application.useCases.*;
 import br.com.dealership.modules.vehicle.domain.ports.out.VehicleRepositoryPort;
 import br.com.dealership.modules.vehicle.mapper.VehicleMapper;
 import org.springframework.context.annotation.Bean;
@@ -36,6 +33,11 @@ public class VehicleConfig {
     @Bean
     public UpdateVehicleUseCase updateVehicleUseCase(VehicleRepositoryPort repositoryPort) {
         return new UpdateVehicleUseCase(repositoryPort);
+    }
+
+    @Bean
+    public FindAvaliableVehicleByIdUseCase findAvaliableVehicleByIdUseCase(VehicleRepositoryPort repositoryPort) {
+        return new FindAvaliableVehicleByIdUseCase(repositoryPort);
     }
 
     @Bean

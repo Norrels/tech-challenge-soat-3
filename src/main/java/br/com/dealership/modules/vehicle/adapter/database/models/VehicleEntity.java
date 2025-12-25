@@ -38,6 +38,7 @@ public class VehicleEntity {
         this.vin = vin;
         this.color = color;
         this.status = status;
+        this.price = price;
     }
 
     public VehicleStatus getStatus() {
