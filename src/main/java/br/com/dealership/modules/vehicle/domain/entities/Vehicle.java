@@ -24,32 +24,6 @@ public class Vehicle {
         this.price = price;
     }
 
-    public void validate() {
-        if (this.make == null || this.getMake().isBlank()) {
-            throw new IllegalArgumentException("Vehicle make cannot be null or empty");
-        }
-
-        if (this.price == null || this.price.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Vehicle price cannot be null or negative");
-        }
-
-        if (this.getModel() == null || this.getModel().isBlank()) {
-            throw new IllegalArgumentException("Vehicle model cannot be null or empty");
-        }
-
-        if (this.getYear() <= 0) {
-            throw new IllegalArgumentException("Vehicle year must be positive");
-        }
-
-        if (this.getVin() == null || this.getVin().isBlank()) {
-            throw new IllegalArgumentException("Vehicle VIN cannot be null or empty");
-        }
-
-        if (this.getStatus() == null) {
-            throw new IllegalArgumentException("Vehicle status cannot be null");
-        }
-    }
-
     public UUID getId() {
         return id;
     }
@@ -112,5 +86,39 @@ public class Vehicle {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public void validate() {
+        if (this.make == null || this.getMake().isBlank()) {
+            throw new IllegalArgumentException("Vehicle make cannot be null or empty");
+        }
+
+        if (this.price == null || this.price.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Vehicle price cannot be null or negative");
+        }
+
+        if (this.getModel() == null || this.getModel().isBlank()) {
+            throw new IllegalArgumentException("Vehicle model cannot be null or empty");
+        }
+
+        if (this.getYear() <= 0) {
+            throw new IllegalArgumentException("Vehicle year must be positive");
+        }
+
+        if (this.getVin() == null || this.getVin().isBlank()) {
+            throw new IllegalArgumentException("Vehicle VIN cannot be null or empty");
+        }
+
+        if (this.getStatus() == null) {
+            throw new IllegalArgumentException("Vehicle status cannot be null");
+        }
+    }
+
+    public void markAsSold() {
+        if(this.status == VehicleStatus.SOLD) {
+            throw new IllegalStateException("Vehicle is already marked as sold");
+        }
+
+        this.status = VehicleStatus.SOLD;
     }
 }

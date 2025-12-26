@@ -1,13 +1,11 @@
 package br.com.dealership.modules.sale.config;
 
 import br.com.dealership.modules.sale.application.services.SaleService;
-import br.com.dealership.modules.sale.application.useCases.CreateSaleUseCase;
-import br.com.dealership.modules.sale.application.useCases.FindAllSaleByCustomerCPFUseCase;
-import br.com.dealership.modules.sale.application.useCases.FindAllSalesUseCase;
-import br.com.dealership.modules.sale.application.useCases.FindSaleByIdUseCase;
+import br.com.dealership.modules.sale.application.useCases.*;
 import br.com.dealership.modules.sale.domain.ports.out.SaleRepositoryPort;
 import br.com.dealership.modules.sale.mapper.SaleMapper;
-import br.com.dealership.modules.shared.useCases.FindAvaliableVehicleByIdUseCasePort;
+import br.com.dealership.modules.shared.useCases.FindAvailableVehicleByIdUseCasePort;
+import br.com.dealership.modules.shared.useCases.MarkVehicleAsSoldUseCasePort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -40,11 +38,18 @@ public class SaleConfig {
     }
 
     @Bean
+    public CompleteSaleUseCase completeSaleUseCase(SaleRepositoryPort repositoryPort) {
+        return new CompleteSaleUseCase(repositoryPort);
+    }
+
+    @Bean
     public SaleService saleService(CreateSaleUseCase createSaleUseCase,
                                    FindSaleByIdUseCase findSaleByIdUseCase,
                                    FindAllSalesUseCase findAllSalesUseCase,
                                    FindAllSaleByCustomerCPFUseCase findAllSaleByCustomerCPFUseCase,
-                                   FindAvaliableVehicleByIdUseCasePort findAvaliableVehicleByIdUseCase) {
-        return new SaleService(createSaleUseCase, findSaleByIdUseCase, findAllSalesUseCase, findAllSaleByCustomerCPFUseCase, findAvaliableVehicleByIdUseCase);
+                                   FindAvailableVehicleByIdUseCasePort findAvailableVehicleByIdUseCase,
+                                   MarkVehicleAsSoldUseCasePort markVehicleAsSoldUseCase,
+                                   CompleteSaleUseCase completeSaleUseCase) {
+        return new SaleService(createSaleUseCase, findSaleByIdUseCase, findAllSalesUseCase, findAllSaleByCustomerCPFUseCase, findAvailableVehicleByIdUseCase, markVehicleAsSoldUseCase, completeSaleUseCase);
     }
 }

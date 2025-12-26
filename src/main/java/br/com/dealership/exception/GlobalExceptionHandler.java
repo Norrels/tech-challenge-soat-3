@@ -2,6 +2,7 @@ package br.com.dealership.exception;
 
 import br.com.dealership.modules.sale.domain.entities.SaleStatus;
 import br.com.dealership.modules.sale.domain.exception.InvalidSaleException;
+import br.com.dealership.modules.sale.domain.exception.InvalidSaleStatusException;
 import br.com.dealership.modules.sale.domain.exception.SaleNotFoundException;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
 import br.com.dealership.modules.vehicle.domain.exception.DuplicateVinException;
@@ -98,6 +99,21 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidSaleStatusException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSaleStatusException(
+            InvalidSaleStatusException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

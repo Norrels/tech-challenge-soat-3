@@ -106,4 +106,12 @@ public class SaleOrder {
             throw new InvalidSaleException("Sale status is required");
         }
     }
+
+    public void markAsPaid() {
+        if( this.status != SaleStatus.PENDING ) {
+            throw new InvalidSaleException("Only pending sales can be marked as paid");
+        }
+
+        this.status = SaleStatus.COMPLETED;
+    }
 }
