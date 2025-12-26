@@ -22,7 +22,7 @@ jobs:
           cache: 'maven'
 
       - name: Run tests with coverage
-        run: mvn clean test
+        run: mvn clean test -Dspring.profiles.active=test
 
       - name: Generate coverage report
         id: jacoco
