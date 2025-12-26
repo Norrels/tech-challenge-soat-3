@@ -1,16 +1,15 @@
 package br.com.dealership.modules.vehicle.application.useCases;
 
 import br.com.dealership.modules.shared.dtos.FindVehicleDTO;
-import br.com.dealership.modules.shared.useCases.FindAvaliableVehicleByIdUseCasePort;
-import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
+import br.com.dealership.modules.shared.useCases.FindAvailableVehicleByIdUseCasePort;
 import br.com.dealership.modules.vehicle.domain.ports.out.VehicleRepositoryPort;
 
 import java.util.Optional;
 
-public class FindAvaliableVehicleByIdUseCase implements FindAvaliableVehicleByIdUseCasePort {
+public class FindAvailableVehicleByIdUseCase implements FindAvailableVehicleByIdUseCasePort {
     private final VehicleRepositoryPort repository;
 
-    public FindAvaliableVehicleByIdUseCase(VehicleRepositoryPort repository) {
+    public FindAvailableVehicleByIdUseCase(VehicleRepositoryPort repository) {
         this.repository = repository;
     }
 

@@ -36,8 +36,8 @@ public class VehicleConfig {
     }
 
     @Bean
-    public FindAvaliableVehicleByIdUseCase findAvaliableVehicleByIdUseCase(VehicleRepositoryPort repositoryPort) {
-        return new FindAvaliableVehicleByIdUseCase(repositoryPort);
+    public FindAvailableVehicleByIdUseCase findAvailableVehicleByIdUseCase(VehicleRepositoryPort repositoryPort) {
+        return new FindAvailableVehicleByIdUseCase(repositoryPort);
     }
 
     @Bean
