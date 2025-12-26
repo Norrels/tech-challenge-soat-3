@@ -41,6 +41,11 @@ public class VehicleConfig {
     }
 
     @Bean
+    public MarkVehicleAsSoldUseCase markVehicleAsSoldUseCase(VehicleRepositoryPort repositoryPort) {
+        return new MarkVehicleAsSoldUseCase(repositoryPort);
+    }
+
+    @Bean
     public VehicleService vehicleService(CreateVehicleUseCase createVehicleUseCase,
                                          GetVehicleByVinUseCase getVehicleByVinUseCase,
                                          GetVehicleByStatusUseCase getVehicleByStatusUseCase,
