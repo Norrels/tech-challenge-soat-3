@@ -22,7 +22,7 @@ public class VehicleRepositoryAdapter implements VehicleRepositoryPort {
 
     @Override
     public List<Vehicle> getAllByStatus(VehicleStatus status) {
-        return vehicleRepository.findAllByStatus(status).stream()
+        return vehicleRepository.findAllByStatusOrderByPriceAsc(status).stream()
                 .map(vehicleMapper::mapToDomain)
                 .toList();
     }
