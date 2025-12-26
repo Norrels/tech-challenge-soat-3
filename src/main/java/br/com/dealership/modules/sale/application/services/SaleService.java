@@ -1,13 +1,11 @@
 package br.com.dealership.modules.sale.application.services;
 
-import br.com.dealership.modules.sale.application.useCases.CreateSaleUseCase;
-import br.com.dealership.modules.sale.application.useCases.FindAllSaleByCustomerCPFUseCase;
-import br.com.dealership.modules.sale.application.useCases.FindAllSalesUseCase;
-import br.com.dealership.modules.sale.application.useCases.FindSaleByIdUseCase;
+import br.com.dealership.modules.sale.application.useCases.*;
 import br.com.dealership.modules.sale.domain.entities.SaleOrder;
 import br.com.dealership.modules.sale.domain.exception.InvalidSaleException;
 import br.com.dealership.modules.sale.domain.ports.in.SaleServicePort;
 import br.com.dealership.modules.shared.useCases.FindAvaliableVehicleByIdUseCasePort;
+import br.com.dealership.modules.shared.useCases.MarkVehicleAsSoldUseCasePort;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
 
 import java.util.List;
@@ -18,13 +16,17 @@ public class SaleService implements SaleServicePort {
     private final FindAllSalesUseCase findAllSalesUseCase;
     private final FindAllSaleByCustomerCPFUseCase findAllSaleByCustomerCPFUseCase;
     private final FindAvaliableVehicleByIdUseCasePort findAvaliableVehicleByIdUseCase;
+    private final MarkVehicleAsSoldUseCasePort markVehicleAsSoldUseCase;
+    private final CompleteSaleUseCase completeSaleUseCase;
 
-    public SaleService(CreateSaleUseCase createSaleUseCase, FindSaleByIdUseCase findSaleByIdUseCase, FindAllSalesUseCase findAllSalesUseCase, FindAllSaleByCustomerCPFUseCase findAllSaleByCustomerCPFUseCase, FindAvaliableVehicleByIdUseCasePort findAvaliableVehicleByIdUseCase) {
+    public SaleService(CreateSaleUseCase createSaleUseCase, FindSaleByIdUseCase findSaleByIdUseCase, FindAllSalesUseCase findAllSalesUseCase, FindAllSaleByCustomerCPFUseCase findAllSaleByCustomerCPFUseCase, FindAvaliableVehicleByIdUseCasePort findAvaliableVehicleByIdUseCase, MarkVehicleAsSoldUseCasePort markVehicleAsSoldUseCase, CompleteSaleUseCase completeSaleUseCase) {
         this.createSaleUseCase = createSaleUseCase;
         this.findSaleByIdUseCase = findSaleByIdUseCase;
         this.findAllSalesUseCase = findAllSalesUseCase;
         this.findAllSaleByCustomerCPFUseCase = findAllSaleByCustomerCPFUseCase;
         this.findAvaliableVehicleByIdUseCase = findAvaliableVehicleByIdUseCase;
+        this.markVehicleAsSoldUseCase = markVehicleAsSoldUseCase;
+        this.completeSaleUseCase = completeSaleUseCase;
     }
 
     @Override
@@ -53,5 +55,11 @@ public class SaleService implements SaleServicePort {
     @Override
     public List<SaleOrder> getAllSalesByCustomerCPF(String cpf) {
         return findAllSaleByCustomerCPFUseCase.execute(cpf);
+    }
+
+    @Override
+    public void paySale(String id, Boolean paymentSuccess) {
+        SaleOrder saleOrder = completeSaleUseCase.execute(id, paymentSuccess);
+        markVehicleAsSoldUseCase.execute(saleOrder.getVihicleId());
     }
 }
