@@ -16,7 +16,7 @@ public class CreateSaleDTO {
     private String customerName;
 
     @NotBlank(message = "Customer CPF is required")
-    @Schema(description = "Customer's CPF (Brazilian ID)", example = "12345678900", required = true)
+    @Schema(description = "Customer's CPF (Brazilian ID)", example = "681.702.720-92", required = true)
     private String customerCpf;
 
     @NotBlank(message = "Vehicle VIN is required")
