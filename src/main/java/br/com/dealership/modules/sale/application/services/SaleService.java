@@ -60,6 +60,8 @@ public class SaleService implements SaleServicePort {
     @Override
     public void paySale(String id, Boolean paymentSuccess) {
         SaleOrder saleOrder = completeSaleUseCase.execute(id, paymentSuccess);
-        markVehicleAsSoldUseCase.execute(saleOrder.getVihicleId());
+        if (paymentSuccess) {
+            markVehicleAsSoldUseCase.execute(saleOrder.getVihicleId());
+        }
     }
 }

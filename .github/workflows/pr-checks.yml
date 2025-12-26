@@ -1,0 +1,103 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test-and-coverage:
+    name: Tests and Coverage Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run tests with coverage
+        run: mvn clean test -Dspring.profiles.active=test
+
+      - name: Generate coverage report
+        id: jacoco
+        run: |
+          INSTRUCTION_COVERAGE=$(awk -F, 'NR>1 {missed+=$4; covered+=$5} END {total=missed+covered; if(total>0) print int((covered/total)*100)}' target/site/jacoco/jacoco.csv)
+          LINE_COVERAGE=$(awk -F, 'NR>1 {missed+=$8; covered+=$9} END {total=missed+covered; if(total>0) print int((covered/total)*100)}' target/site/jacoco/jacoco.csv)
+          BRANCH_COVERAGE=$(awk -F, 'NR>1 {missed+=$6; covered+=$7} END {total=missed+covered; if(total>0) print int((covered/total)*100)}' target/site/jacoco/jacoco.csv)
+
+          echo "instruction_coverage=$INSTRUCTION_COVERAGE" >> $GITHUB_OUTPUT
+          echo "line_coverage=$LINE_COVERAGE" >> $GITHUB_OUTPUT
+          echo "branch_coverage=$BRANCH_COVERAGE" >> $GITHUB_OUTPUT
+
+          echo "Coverage Report:"
+          echo "  Instructions: $INSTRUCTION_COVERAGE%"
+          echo "  Lines: $LINE_COVERAGE%"
+          echo "  Branches: $BRANCH_COVERAGE%"
+
+      - name: Check coverage threshold
+        run: |
+          INSTRUCTION_COVERAGE=${{ steps.jacoco.outputs.instruction_coverage }}
+          LINE_COVERAGE=${{ steps.jacoco.outputs.line_coverage }}
+
+          echo "Checking coverage thresholds..."
+          echo "Instruction Coverage: $INSTRUCTION_COVERAGE%"
+          echo "Line Coverage: $LINE_COVERAGE%"
+
+          if [ "$INSTRUCTION_COVERAGE" -lt 80 ]; then
+            echo "FAILED: Instruction coverage ($INSTRUCTION_COVERAGE%) is below 80% threshold"
+            exit 1
+          fi
+
+          if [ "$LINE_COVERAGE" -lt 80 ]; then
+            echo "FAILED: Line coverage ($LINE_COVERAGE%) is below 80% threshold"
+            exit 1
+          fi
+
+          echo "PASSED: All coverage thresholds met"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+          retention-days: 30
+
+      - name: Comment PR with coverage
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const instructionCoverage = '${{ steps.jacoco.outputs.instruction_coverage }}';
+            const lineCoverage = '${{ steps.jacoco.outputs.line_coverage }}';
+            const branchCoverage = '${{ steps.jacoco.outputs.branch_coverage }}';
+
+            const passed = instructionCoverage >= 80 && lineCoverage >= 80;
+            const status = passed ? 'PASSED' : 'FAILED';
+
+            const comment = `## Test Coverage Report - ${status}
+
+            | Metric | Coverage | Required | Status |
+            |--------|----------|----------|--------|
+            | Instructions | ${instructionCoverage}% | 80% | ${instructionCoverage >= 80 ? 'PASS' : 'FAIL'} |
+            | Lines | ${lineCoverage}% | 80% | ${lineCoverage >= 80 ? 'PASS' : 'FAIL'} |
+            | Branches | ${branchCoverage}% | - | INFO |
+
+            ${passed ? 'All coverage requirements met.' : 'Coverage below threshold. Please add more tests.'}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
