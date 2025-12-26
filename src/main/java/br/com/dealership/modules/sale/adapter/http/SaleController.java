@@ -2,6 +2,7 @@ package br.com.dealership.modules.sale.adapter.http;
 
 import br.com.dealership.exception.ErrorResponse;
 import br.com.dealership.modules.sale.adapter.http.dto.CreateSaleDTO;
+import br.com.dealership.modules.sale.adapter.http.dto.WebhookStatusDTO;
 import br.com.dealership.modules.sale.application.services.SaleService;
 import br.com.dealership.modules.sale.domain.entities.SaleOrder;
 import br.com.dealership.modules.sale.mapper.SaleMapper;
@@ -77,7 +78,7 @@ public class SaleController {
             @ApiResponse(
                     responseCode = "200",
                     description = "Payment status updated successfully",
-                    content = @Content(schema = @Schema(implementation = SaleOrder.class))
+                    content = @Content(schema = @Schema(implementation = WebhookStatusDTO.class))
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -88,13 +89,18 @@ public class SaleController {
                     responseCode = "404",
                     description = "Sale not found",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Sale is not in PENDING status",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
     public ResponseEntity<SaleOrder> updateSaleOrder(
             @Parameter(description = "Sale Order ID") @PathVariable String id,
-            @RequestBody SaleOrder saleOrder) {
-        // TODO Implementar validação do webhook
-        return ResponseEntity.ok(saleOrder);
+            @RequestBody WebhookStatusDTO status) {
+        saleService.paySale(id, status.success());
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping()
@@ -111,7 +117,6 @@ public class SaleController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-
     public ResponseEntity<List<SaleOrder>> getAllSaleOrders(
             @Parameter(description = "Customer CPF (optional)") @RequestParam(required = false) String cpf) {
         if (cpf != null && !cpf.isBlank()) {
