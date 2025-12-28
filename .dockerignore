@@ -30,8 +30,7 @@ buildNumber.properties
 # Documentation
 *.md
 !README.md
-DEPLOY.md
-DEV-SETUP.md
+adr/
 
 # Logs
 *.log
