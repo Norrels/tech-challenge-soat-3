@@ -5,7 +5,9 @@ import br.com.dealership.modules.sale.adapter.http.dto.WebhookStatusDTO;
 import br.com.dealership.modules.sale.domain.entities.SaleStatus;
 import br.com.dealership.modules.vehicle.adapter.http.dto.CreateVehicleDTO;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
+import br.com.dealership.utils.JwtTestHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import java.math.BigDecimal;
 
 import static org.hamcrest.Matchers.*;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -39,8 +42,11 @@ class CompleteSaleFlowIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .apply(springSecurity())
+                .build();
         objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
     }
 
     @Test
@@ -58,6 +64,7 @@ class CompleteSaleFlowIntegrationTest {
         );
 
         String vehicleResponse = mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(vehicleDTO)))
                 .andExpect(status().isOk())
@@ -69,20 +76,19 @@ class CompleteSaleFlowIntegrationTest {
         String vehicleId = objectMapper.readTree(vehicleResponse).get("id").asText();
 
         // STEP 2: Verify vehicle is in available vehicles list
-        mockMvc.perform(get("/api/v1/vehicles/available"))
+        mockMvc.perform(get("/api/v1/vehicles/available")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.vin == '1HGBH41JXMN109999')]").exists())
                 .andExpect(jsonPath("$[?(@.vin == '1HGBH41JXMN109999')].status").value("AVAILABLE"));
 
         // STEP 3: Create a sale for this vehicle
         CreateSaleDTO saleDTO = new CreateSaleDTO();
-        saleDTO.setCustomerName("Maria Silva");
-        saleDTO.setCustomerCpf("12345678909");
         saleDTO.setVehicleVin("1HGBH41JXMN109999");
         saleDTO.setSalePrice(32000.0);
-        saleDTO.setStatus(SaleStatus.PENDING);
 
         String saleResponse = mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("Maria Silva", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(saleDTO)))
                 .andExpect(status().isOk())
@@ -97,13 +103,15 @@ class CompleteSaleFlowIntegrationTest {
         String saleId = objectMapper.readTree(saleResponse).get("id").asText();
 
         // STEP 4: Verify sale appears in all sales
-        mockMvc.perform(get("/sales"))
+        mockMvc.perform(get("/sales")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.id == '" + saleId + "')]").exists())
                 .andExpect(jsonPath("$[?(@.id == '" + saleId + "')].status").value("PENDING"));
 
         // STEP 5: Verify sale appears when filtering by customer CPF
         mockMvc.perform(get("/sales")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909"))
                         .param("cpf", "12345678909"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
@@ -111,7 +119,7 @@ class CompleteSaleFlowIntegrationTest {
                 .andExpect(jsonPath("$[0].customerName").value("Maria Silva"));
 
         // STEP 6: Process payment webhook with success
-        WebhookStatusDTO paymentSuccess = new WebhookStatusDTO(true);
+        WebhookStatusDTO paymentSuccess = new WebhookStatusDTO(true, "12345678909");
 
         mockMvc.perform(post("/sales/payment-webhook/{id}", saleId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -119,7 +127,8 @@ class CompleteSaleFlowIntegrationTest {
                 .andExpect(status().isOk());
 
         // STEP 7: Verify sale status changed to COMPLETED
-        mockMvc.perform(get("/sales/{id}", saleId))
+        mockMvc.perform(get("/sales/{id}", saleId)
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(saleId))
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
@@ -127,7 +136,8 @@ class CompleteSaleFlowIntegrationTest {
                 .andExpect(jsonPath("$.salePrice").value(32000.0));
 
         // STEP 8: Verify vehicle status changed to SOLD
-        mockMvc.perform(get("/api/v1/vehicles/{vin}", "1HGBH41JXMN109999"))
+        mockMvc.perform(get("/api/v1/vehicles/{vin}", "1HGBH41JXMN109999")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(vehicleId))
                 .andExpect(jsonPath("$.status").value("SOLD"))
@@ -135,12 +145,14 @@ class CompleteSaleFlowIntegrationTest {
                 .andExpect(jsonPath("$.model").value("Civic EX"));
 
         // STEP 9: Verify vehicle is NO LONGER in available vehicles list
-        mockMvc.perform(get("/api/v1/vehicles/available"))
+        mockMvc.perform(get("/api/v1/vehicles/available")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.vin == '1HGBH41JXMN109999')]").doesNotExist());
 
         // STEP 10: Verify vehicle IS in sold vehicles list
-        mockMvc.perform(get("/api/v1/vehicles/sold"))
+        mockMvc.perform(get("/api/v1/vehicles/sold")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.vin == '1HGBH41JXMN109999')]").exists())
                 .andExpect(jsonPath("$[?(@.vin == '1HGBH41JXMN109999')].status").value("SOLD"));
@@ -161,6 +173,7 @@ class CompleteSaleFlowIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(vehicleDTO)))
                 .andExpect(status().isOk())
@@ -168,13 +181,11 @@ class CompleteSaleFlowIntegrationTest {
 
         // STEP 2: Create a sale
         CreateSaleDTO saleDTO = new CreateSaleDTO();
-        saleDTO.setCustomerName("João Santos");
-        saleDTO.setCustomerCpf("98765432100");
         saleDTO.setVehicleVin("TOYOTA123456789VIN");
         saleDTO.setSalePrice(28000.0);
-        saleDTO.setStatus(SaleStatus.PENDING);
 
         String saleResponse = mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("João Santos", "98765432100"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(saleDTO)))
                 .andExpect(status().isOk())
@@ -186,7 +197,7 @@ class CompleteSaleFlowIntegrationTest {
         String saleId = objectMapper.readTree(saleResponse).get("id").asText();
 
         // STEP 3: Process payment webhook with FAILURE
-        WebhookStatusDTO paymentFailure = new WebhookStatusDTO(false);
+        WebhookStatusDTO paymentFailure = new WebhookStatusDTO(false, "98765432100");
 
         mockMvc.perform(post("/sales/payment-webhook/{id}", saleId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -194,17 +205,20 @@ class CompleteSaleFlowIntegrationTest {
                 .andExpect(status().isOk());
 
         // STEP 4: Verify sale status changed to CANCELED
-        mockMvc.perform(get("/sales/{id}", saleId))
+        mockMvc.perform(get("/sales/{id}", saleId)
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELED"));
 
         // STEP 5: Verify vehicle is still AVAILABLE (payment failed, so vehicle was not sold)
-        mockMvc.perform(get("/api/v1/vehicles/{vin}", "TOYOTA123456789VIN"))
+        mockMvc.perform(get("/api/v1/vehicles/{vin}", "TOYOTA123456789VIN")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("AVAILABLE"));
 
         // STEP 6: Verify vehicle is still in available vehicles list
-        mockMvc.perform(get("/api/v1/vehicles/available"))
+        mockMvc.perform(get("/api/v1/vehicles/available")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.vin == 'TOYOTA123456789VIN')]").exists())
                 .andExpect(jsonPath("$[?(@.vin == 'TOYOTA123456789VIN')].status").value("AVAILABLE"));
@@ -225,19 +239,18 @@ class CompleteSaleFlowIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(vehicleDTO)))
                 .andExpect(status().isOk());
 
         // STEP 2: Create first sale
         CreateSaleDTO firstSale = new CreateSaleDTO();
-        firstSale.setCustomerName("Customer One");
-        firstSale.setCustomerCpf("12345678909");
         firstSale.setVehicleVin("BMW123456789VIN");
         firstSale.setSalePrice(55000.0);
-        firstSale.setStatus(SaleStatus.PENDING);
 
         String firstSaleResponse = mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("Customer One", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(firstSale)))
                 .andExpect(status().isOk())
@@ -248,7 +261,7 @@ class CompleteSaleFlowIntegrationTest {
         String firstSaleId = objectMapper.readTree(firstSaleResponse).get("id").asText();
 
         // STEP 3: Complete first sale
-        WebhookStatusDTO paymentSuccess = new WebhookStatusDTO(true);
+        WebhookStatusDTO paymentSuccess = new WebhookStatusDTO(true, "12345678909");
 
         mockMvc.perform(post("/sales/payment-webhook/{id}", firstSaleId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -256,19 +269,18 @@ class CompleteSaleFlowIntegrationTest {
                 .andExpect(status().isOk());
 
         // STEP 4: Verify vehicle is now SOLD
-        mockMvc.perform(get("/api/v1/vehicles/{vin}", "BMW123456789VIN"))
+        mockMvc.perform(get("/api/v1/vehicles/{vin}", "BMW123456789VIN")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SOLD"));
 
         // STEP 5: Try to create another sale for the same (now sold) vehicle
         CreateSaleDTO secondSale = new CreateSaleDTO();
-        secondSale.setCustomerName("Customer Two");
-        secondSale.setCustomerCpf("98765432100");
         secondSale.setVehicleVin("BMW123456789VIN");
         secondSale.setSalePrice(55000.0);
-        secondSale.setStatus(SaleStatus.PENDING);
 
         mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("Customer Two", "98765432100"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondSale)))
                 .andExpect(status().isBadRequest())
@@ -296,19 +308,18 @@ class CompleteSaleFlowIntegrationTest {
             );
 
             mockMvc.perform(post("/api/v1/vehicles")
+                            .with(JwtTestHelper.createAdminJwt("Default User", "12345678909"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(vehicleDTO)))
                     .andExpect(status().isOk());
 
             // Create sale
             CreateSaleDTO saleDTO = new CreateSaleDTO();
-            saleDTO.setCustomerName(customers[i]);
-            saleDTO.setCustomerCpf(cpfs[i]);
             saleDTO.setVehicleVin(vins[i]);
             saleDTO.setSalePrice(30000.0);
-            saleDTO.setStatus(SaleStatus.PENDING);
 
             String saleResponse = mockMvc.perform(post("/sales")
+                            .with(JwtTestHelper.createAdminJwt(customers[i], cpfs[i]))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(saleDTO)))
                     .andExpect(status().isOk())
@@ -319,7 +330,7 @@ class CompleteSaleFlowIntegrationTest {
             String saleId = objectMapper.readTree(saleResponse).get("id").asText();
 
             // Complete payment
-            WebhookStatusDTO payment = new WebhookStatusDTO(true);
+            WebhookStatusDTO payment = new WebhookStatusDTO(true, cpfs[i]);
 
             mockMvc.perform(post("/sales/payment-webhook/{id}", saleId)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -328,19 +339,22 @@ class CompleteSaleFlowIntegrationTest {
         }
 
         // Verify all sales are completed
-        mockMvc.perform(get("/sales"))
+        mockMvc.perform(get("/sales")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[*].status", everyItem(is("COMPLETED"))));
 
         // Verify all vehicles are sold
-        mockMvc.perform(get("/api/v1/vehicles/sold"))
+        mockMvc.perform(get("/api/v1/vehicles/sold")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[*].status", everyItem(is("SOLD"))));
 
         // Verify no available vehicles
-        mockMvc.perform(get("/api/v1/vehicles/available"))
+        mockMvc.perform(get("/api/v1/vehicles/available")
+                        .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
