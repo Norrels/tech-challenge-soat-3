@@ -72,6 +72,11 @@
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.8.4</version>
@@ -104,8 +109,6 @@
 							<excludes>
 								<exclude>**/DealershipApiApplication.class</exclude>
 								<exclude>**/security/**Config.class</exclude>
-								<exclude>**/security/**Filter.class</exclude>
-								<exclude>**/security/alb/**/*.class</exclude>
 								<exclude>**/dto/**/*.class</exclude>
 								<exclude>**/models/**/*.class</exclude>
 								<exclude>**/mapper/**/*.class</exclude>
@@ -121,8 +124,6 @@
 							<excludes>
 								<exclude>**/DealershipApiApplication.class</exclude>
 								<exclude>**/security/**Config.class</exclude>
-								<exclude>**/security/**Filter.class</exclude>
-								<exclude>**/security/alb/**/*.class</exclude>
 								<exclude>**/dto/**/*.class</exclude>
 								<exclude>**/models/**/*.class</exclude>
 								<exclude>**/mapper/**/*.class</exclude>

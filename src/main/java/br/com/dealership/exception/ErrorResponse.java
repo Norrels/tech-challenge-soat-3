@@ -4,13 +4,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Standard error response structure")
 public class ErrorResponse {
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
     @Schema(description = "Timestamp when the error occurred", example = "2025-12-15T10:30:00")
-    private LocalDateTime timestamp;
+    private String timestamp;
 
     @Schema(description = "HTTP status code", example = "404")
     private int status;
@@ -28,22 +31,22 @@ public class ErrorResponse {
     private List<ValidationError> validationErrors;
 
     public ErrorResponse() {
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = LocalDateTime.now().format(FORMATTER);
     }
 
     public ErrorResponse(int status, String error, String message, String path) {
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = LocalDateTime.now().format(FORMATTER);
         this.status = status;
         this.error = error;
         this.message = message;
         this.path = path;
     }
 
-    public LocalDateTime getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 

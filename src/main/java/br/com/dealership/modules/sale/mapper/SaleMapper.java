@@ -41,22 +41,21 @@ public class SaleMapper {
         );
     }
 
-    public SaleOrder mapFromCreateDTO(CreateSaleDTO dto) {
+    public SaleOrder mapFromCreateDTO(CreateSaleDTO dto, String customerName, String customerCpf) {
         if (dto == null) {
             return null;
         }
 
-        CPF cpf = new CPF(dto.getCustomerCpf());
-        SaleStatus status = dto.getStatus() != null ? dto.getStatus() : SaleStatus.PENDING;
+        CPF cpf = new CPF(customerCpf);
 
         return new SaleOrder(
                 null,
-                dto.getCustomerName(),
+                customerName,
                 cpf,
                 dto.getVehicleVin(),
                 dto.getSalePrice(),
                 null,
-                status
+                SaleStatus.PENDING
         );
     }
 

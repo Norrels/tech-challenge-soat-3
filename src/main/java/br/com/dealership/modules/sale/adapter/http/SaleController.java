@@ -6,6 +6,7 @@ import br.com.dealership.modules.sale.adapter.http.dto.WebhookStatusDTO;
 import br.com.dealership.modules.sale.application.services.SaleService;
 import br.com.dealership.modules.sale.domain.entities.SaleOrder;
 import br.com.dealership.modules.sale.mapper.SaleMapper;
+import br.com.dealership.security.AuthenticatedUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,10 +25,12 @@ import java.util.List;
 public class SaleController {
     private final SaleService saleService;
     private final SaleMapper saleMapper;
+    private final AuthenticatedUserService authenticatedUserService;
 
-    public SaleController(SaleService saleService, SaleMapper saleMapper) {
+    public SaleController(SaleService saleService, SaleMapper saleMapper, AuthenticatedUserService authenticatedUserService) {
         this.saleService = saleService;
         this.saleMapper = saleMapper;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     @PostMapping()
@@ -44,8 +47,14 @@ public class SaleController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    public ResponseEntity<SaleOrder> createSaleOrder(@RequestBody CreateSaleDTO CreateSaleDTO) {
-        return ResponseEntity.ok(saleService.createSale(saleMapper.mapFromCreateDTO(CreateSaleDTO)));
+    public ResponseEntity<SaleOrder> createSaleOrder(@RequestBody CreateSaleDTO createSaleDTO) {
+        var authenticatedUser = authenticatedUserService.getAuthenticatedUser();
+        SaleOrder saleOrder = saleMapper.mapFromCreateDTO(
+                createSaleDTO,
+                authenticatedUser.name(),
+                authenticatedUser.cpf()
+        );
+        return ResponseEntity.ok(saleService.createSale(saleOrder));
     }
 
     @GetMapping("/{id}")
@@ -82,7 +91,7 @@ public class SaleController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid payment data",
+                    description = "Invalid payment data or payer CPF does not match customer CPF",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
@@ -99,7 +108,7 @@ public class SaleController {
     public ResponseEntity<SaleOrder> updateSaleOrder(
             @Parameter(description = "Sale Order ID") @PathVariable String id,
             @RequestBody WebhookStatusDTO status) {
-        saleService.paySale(id, status.success());
+        saleService.paySale(id, status.success(), status.payerCpf());
         return ResponseEntity.ok().build();
     }
 

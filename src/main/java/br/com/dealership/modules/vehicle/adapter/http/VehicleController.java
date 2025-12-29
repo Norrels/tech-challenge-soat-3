@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import br.com.dealership.exception.ErrorResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class VehicleController {
     }
 
     @PostMapping()
+    @PreAuthorize("hasRole('Admin')")
     @Operation(summary = "Create a new vehicle", description = "Creates a new vehicle in the system")
     @ApiResponses(value = {
             @ApiResponse(
@@ -46,6 +48,11 @@ public class VehicleController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid vehicle data",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Access denied - Admin role required",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
@@ -111,6 +118,7 @@ public class VehicleController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('Admin')")
     @Operation(summary = "Update a vehicle", description = "Updates an existing vehicle by its ID")
     @ApiResponses(value = {
             @ApiResponse(
@@ -121,6 +129,11 @@ public class VehicleController {
             @ApiResponse(
                     responseCode = "400",
                     description = "Invalid vehicle data",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Access denied - Admin role required",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             ),
             @ApiResponse(
