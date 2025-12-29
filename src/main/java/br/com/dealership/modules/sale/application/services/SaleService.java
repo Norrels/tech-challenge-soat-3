@@ -2,6 +2,7 @@ package br.com.dealership.modules.sale.application.services;
 
 import br.com.dealership.modules.sale.application.useCases.*;
 import br.com.dealership.modules.sale.domain.entities.SaleOrder;
+import br.com.dealership.modules.sale.domain.entities.valueobjects.CPF;
 import br.com.dealership.modules.sale.domain.exception.InvalidSaleException;
 import br.com.dealership.modules.sale.domain.ports.in.SaleServicePort;
 import br.com.dealership.modules.shared.useCases.FindAvailableVehicleByIdUseCasePort;
@@ -58,10 +59,17 @@ public class SaleService implements SaleServicePort {
     }
 
     @Override
-    public void paySale(String id, Boolean paymentSuccess) {
-        SaleOrder saleOrder = completeSaleUseCase.execute(id, paymentSuccess);
+    public void paySale(String id, Boolean paymentSuccess, String payerCpf) {
+        SaleOrder saleOrder = findSaleByIdUseCase.execute(id);
+
+        CPF payerCpfObj = new CPF(payerCpf);
+        if (!saleOrder.getCustomerCpf().equals(payerCpfObj)) {
+            throw new InvalidSaleException("Payer CPF does not match the customer CPF for this sale");
+        }
+
+        SaleOrder completedSale = completeSaleUseCase.execute(id, paymentSuccess);
         if (paymentSuccess) {
-            markVehicleAsSoldUseCase.execute(saleOrder.getVihicleId());
+            markVehicleAsSoldUseCase.execute(completedSale.getVihicleId());
         }
     }
 }

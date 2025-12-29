@@ -9,5 +9,5 @@ public interface SaleServicePort {
     SaleOrder createSale(SaleOrder sale);
     List<SaleOrder> getAllSales();
     List<SaleOrder> getAllSalesByCustomerCPF(String cpf);
-    void paySale(String id, Boolean paymentSuccess);
+    void paySale(String id, Boolean paymentSuccess, String payerCpf);
 }
