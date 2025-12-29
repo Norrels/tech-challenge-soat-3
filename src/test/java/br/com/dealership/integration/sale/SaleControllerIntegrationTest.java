@@ -5,7 +5,9 @@ import br.com.dealership.modules.sale.adapter.http.dto.WebhookStatusDTO;
 import br.com.dealership.modules.sale.domain.entities.SaleStatus;
 import br.com.dealership.modules.vehicle.adapter.http.dto.CreateVehicleDTO;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
+import br.com.dealership.utils.JwtTestHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.math.BigDecimal;
 
 import static org.hamcrest.Matchers.*;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -41,8 +44,11 @@ class SaleControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .apply(springSecurity())
+                .build();
         objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
 
         createVehicleDTO = new CreateVehicleDTO(
                 "Honda",
@@ -55,24 +61,21 @@ class SaleControllerIntegrationTest {
         );
 
         createSaleDTO = new CreateSaleDTO();
-        createSaleDTO.setCustomerName("John Doe");
-        createSaleDTO.setCustomerCpf("12345678909");
         createSaleDTO.setVehicleVin("1HGBH41JXMN109186");
         createSaleDTO.setSalePrice(25000.0);
-        createSaleDTO.setStatus(SaleStatus.PENDING);
     }
 
     @Test
     @DisplayName("Should create sale successfully when vehicle is available")
     void shouldCreateSaleSuccessfullyWhenVehicleIsAvailable() throws Exception {
-        // Create vehicle first
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
-        // Create sale
         mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSaleDTO)))
                 .andExpect(status().isOk())
@@ -91,6 +94,7 @@ class SaleControllerIntegrationTest {
         createSaleDTO.setVehicleVin("NONEXISTENT");
 
         mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSaleDTO)))
                 .andExpect(status().isBadRequest())
@@ -101,7 +105,6 @@ class SaleControllerIntegrationTest {
     @Test
     @DisplayName("Should return 400 when creating sale with sold vehicle")
     void shouldReturn400WhenCreatingSaleWithSoldVehicle() throws Exception {
-        // Create sold vehicle
         CreateVehicleDTO soldVehicle = new CreateVehicleDTO(
                 "Honda",
                 "Civic",
@@ -113,6 +116,7 @@ class SaleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(soldVehicle)))
                 .andExpect(status().isOk());
@@ -120,6 +124,7 @@ class SaleControllerIntegrationTest {
         createSaleDTO.setVehicleVin("SOLDVIN123456789");
 
         mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSaleDTO)))
                 .andExpect(status().isBadRequest())
@@ -129,15 +134,14 @@ class SaleControllerIntegrationTest {
     @Test
     @DisplayName("Should return 400 when creating sale with invalid CPF")
     void shouldReturn400WhenCreatingSaleWithInvalidCpf() throws Exception {
-        // Create vehicle first
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
-        createSaleDTO.setCustomerCpf("00000000000"); // Invalid CPF
-
         mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "00000000000")) // Invalid CPF
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSaleDTO)))
                 .andExpect(status().isBadRequest())
@@ -147,13 +151,14 @@ class SaleControllerIntegrationTest {
     @Test
     @DisplayName("Should get sale by ID successfully")
     void shouldGetSaleByIdSuccessfully() throws Exception {
-        // Create vehicle and sale
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
         String createSaleResponse = mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSaleDTO)))
                 .andExpect(status().isOk())
@@ -163,8 +168,8 @@ class SaleControllerIntegrationTest {
 
         String saleId = objectMapper.readTree(createSaleResponse).get("id").asText();
 
-        // Get sale by ID
-        mockMvc.perform(get("/sales/{id}", saleId))
+        mockMvc.perform(get("/sales/{id}", saleId)
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(saleId))
                 .andExpect(jsonPath("$.customerName").value("John Doe"))
@@ -174,7 +179,8 @@ class SaleControllerIntegrationTest {
     @Test
     @DisplayName("Should return 404 when sale not found")
     void shouldReturn404WhenSaleNotFound() throws Exception {
-        mockMvc.perform(get("/sales/{id}", "999"))
+        mockMvc.perform(get("/sales/{id}", "999")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909")))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value(containsString("999")));
     }
@@ -182,19 +188,18 @@ class SaleControllerIntegrationTest {
     @Test
     @DisplayName("Should get all sales successfully")
     void shouldGetAllSalesSuccessfully() throws Exception {
-        // Create vehicle
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
-        // Create first sale
         mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSaleDTO)))
                 .andExpect(status().isOk());
 
-        // Create second vehicle for second sale
         CreateVehicleDTO secondVehicle = new CreateVehicleDTO(
                 "Toyota",
                 "Camry",
@@ -206,25 +211,23 @@ class SaleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondVehicle)))
                 .andExpect(status().isOk());
 
-        // Create second sale
         CreateSaleDTO secondSale = new CreateSaleDTO();
-        secondSale.setCustomerName("Jane Doe");
-        secondSale.setCustomerCpf("98765432100");
         secondSale.setVehicleVin("DIFFERENTVIN12345");
         secondSale.setSalePrice(30000.0);
-        secondSale.setStatus(SaleStatus.PENDING);
 
         mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("Jane Doe", "98765432100"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondSale)))
                 .andExpect(status().isOk());
 
-        // Get all sales
-        mockMvc.perform(get("/sales"))
+        mockMvc.perform(get("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
     }
@@ -232,19 +235,18 @@ class SaleControllerIntegrationTest {
     @Test
     @DisplayName("Should filter sales by customer CPF successfully")
     void shouldFilterSalesByCustomerCpfSuccessfully() throws Exception {
-        // Create vehicle
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
-        // Create sale for specific customer
         mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSaleDTO)))
                 .andExpect(status().isOk());
 
-        // Create another vehicle
         CreateVehicleDTO secondVehicle = new CreateVehicleDTO(
                 "Toyota",
                 "Camry",
@@ -256,25 +258,23 @@ class SaleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondVehicle)))
                 .andExpect(status().isOk());
 
-        // Create sale for different customer
         CreateSaleDTO differentCustomerSale = new CreateSaleDTO();
-        differentCustomerSale.setCustomerName("Different Customer");
-        differentCustomerSale.setCustomerCpf("11144477735");
         differentCustomerSale.setVehicleVin("DIFFERENTVIN12345");
         differentCustomerSale.setSalePrice(30000.0);
-        differentCustomerSale.setStatus(SaleStatus.PENDING);
 
         mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("Different Customer", "11144477735"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(differentCustomerSale)))
                 .andExpect(status().isOk());
 
-        // Filter sales by first customer CPF
         mockMvc.perform(get("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .param("cpf", "12345678909"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
@@ -285,6 +285,7 @@ class SaleControllerIntegrationTest {
     @DisplayName("Should return 400 when filtering with invalid CPF")
     void shouldReturn400WhenFilteringWithInvalidCpf() throws Exception {
         mockMvc.perform(get("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .param("cpf", "00000000000"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(containsString("Invalid CPF")));
@@ -293,13 +294,14 @@ class SaleControllerIntegrationTest {
     @Test
     @DisplayName("Should complete sale successfully when payment succeeds")
     void shouldCompleteSaleSuccessfullyWhenPaymentSucceeds() throws Exception {
-        // Create vehicle and sale
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
         String createSaleResponse = mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSaleDTO)))
                 .andExpect(status().isOk())
@@ -309,21 +311,20 @@ class SaleControllerIntegrationTest {
 
         String saleId = objectMapper.readTree(createSaleResponse).get("id").asText();
 
-        // Process payment webhook with success
-        WebhookStatusDTO webhookStatus = new WebhookStatusDTO(true);
+        WebhookStatusDTO webhookStatus = new WebhookStatusDTO(true, "12345678909");
 
         mockMvc.perform(post("/sales/payment-webhook/{id}", saleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(webhookStatus)))
                 .andExpect(status().isOk());
 
-        // Verify sale status changed to COMPLETED
-        mockMvc.perform(get("/sales/{id}", saleId))
+        mockMvc.perform(get("/sales/{id}", saleId)
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
 
-        // Verify vehicle status changed to SOLD
-        mockMvc.perform(get("/api/v1/vehicles/{vin}", "1HGBH41JXMN109186"))
+        mockMvc.perform(get("/api/v1/vehicles/{vin}", "1HGBH41JXMN109186")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SOLD"));
     }
@@ -331,13 +332,14 @@ class SaleControllerIntegrationTest {
     @Test
     @DisplayName("Should cancel sale when payment fails")
     void shouldCancelSaleWhenPaymentFails() throws Exception {
-        // Create vehicle and sale
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
         String createSaleResponse = mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSaleDTO)))
                 .andExpect(status().isOk())
@@ -347,21 +349,20 @@ class SaleControllerIntegrationTest {
 
         String saleId = objectMapper.readTree(createSaleResponse).get("id").asText();
 
-        // Process payment webhook with failure
-        WebhookStatusDTO webhookStatus = new WebhookStatusDTO(false);
+        WebhookStatusDTO webhookStatus = new WebhookStatusDTO(false, "12345678909");
 
         mockMvc.perform(post("/sales/payment-webhook/{id}", saleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(webhookStatus)))
                 .andExpect(status().isOk());
 
-        // Verify sale status changed to CANCELED
-        mockMvc.perform(get("/sales/{id}", saleId))
+        mockMvc.perform(get("/sales/{id}", saleId)
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELED"));
 
-        // Verify vehicle is still AVAILABLE
-        mockMvc.perform(get("/api/v1/vehicles/{vin}", "1HGBH41JXMN109186"))
+        mockMvc.perform(get("/api/v1/vehicles/{vin}", "1HGBH41JXMN109186")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("AVAILABLE"));
     }
@@ -369,13 +370,14 @@ class SaleControllerIntegrationTest {
     @Test
     @DisplayName("Should return 409 when trying to pay a non-PENDING sale")
     void shouldReturn409WhenTryingToPayANonPendingSale() throws Exception {
-        // Create vehicle and sale
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
         String createSaleResponse = mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createAdminJwt("John Doe", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createSaleDTO)))
                 .andExpect(status().isOk())
@@ -385,19 +387,92 @@ class SaleControllerIntegrationTest {
 
         String saleId = objectMapper.readTree(createSaleResponse).get("id").asText();
 
-        // Complete sale first time
-        WebhookStatusDTO webhookStatus = new WebhookStatusDTO(true);
+        WebhookStatusDTO webhookStatus = new WebhookStatusDTO(true, "12345678909");
 
         mockMvc.perform(post("/sales/payment-webhook/{id}", saleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(webhookStatus)))
                 .andExpect(status().isOk());
 
-        // Try to pay again
         mockMvc.perform(post("/sales/payment-webhook/{id}", saleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(webhookStatus)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value(containsString("not in PENDING status")));
+    }
+
+    @Test
+    @DisplayName("Should allow non-admin user to create sale")
+    void shouldAllowNonAdminUserToCreateSale() throws Exception {
+        mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("Admin User", "11111111111"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createVehicleDTO)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createRegularUserJwt("Regular User", "12345678909"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createSaleDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.customerName").value("Regular User"))
+                .andExpect(jsonPath("$.customerCpf.value").value("12345678909"))
+                .andExpect(jsonPath("$.status").value("PENDING"));
+    }
+
+    @Test
+    @DisplayName("Should allow non-admin user to view their own sales")
+    void shouldAllowNonAdminUserToViewTheirOwnSales() throws Exception {
+        mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("Admin User", "11111111111"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createVehicleDTO)))
+                .andExpect(status().isOk());
+
+        String createSaleResponse = mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createRegularUserJwt("Regular User", "12345678909"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createSaleDTO)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String saleId = objectMapper.readTree(createSaleResponse).get("id").asText();
+
+        mockMvc.perform(get("/sales/{id}", saleId)
+                        .with(JwtTestHelper.createRegularUserJwt("Regular User", "12345678909")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(saleId))
+                .andExpect(jsonPath("$.customerName").value("Regular User"));
+
+        mockMvc.perform(get("/sales")
+                        .with(JwtTestHelper.createRegularUserJwt("Regular User", "12345678909"))
+                        .param("cpf", "12345678909"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].customerCpf.value").value("12345678909"));
+    }
+
+    @Test
+    @DisplayName("Should allow non-admin user to view all sales")
+    void shouldAllowNonAdminUserToViewAllSales() throws Exception {
+        mockMvc.perform(post("/api/v1/vehicles")
+                        .with(JwtTestHelper.createAdminJwt("Admin User", "11111111111"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createVehicleDTO)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/sales")
+                        .with(JwtTestHelper.createRegularUserJwt("Regular User", "12345678909"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createSaleDTO)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/sales")
+                        .with(JwtTestHelper.createRegularUserJwt("Another User", "98765432100")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))));
     }
 }
