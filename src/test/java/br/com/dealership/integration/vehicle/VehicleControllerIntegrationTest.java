@@ -3,6 +3,7 @@ package br.com.dealership.integration.vehicle;
 import br.com.dealership.modules.vehicle.adapter.http.dto.CreateVehicleDTO;
 import br.com.dealership.modules.vehicle.adapter.http.dto.UpdateVehicleDTO;
 import br.com.dealership.modules.vehicle.domain.entities.VehicleStatus;
+import br.com.dealership.utils.JwtTestHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,8 +16,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 
 import java.math.BigDecimal;
 
@@ -57,29 +56,11 @@ class VehicleControllerIntegrationTest {
         );
     }
 
-    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor createMockJwt() {
-        return SecurityMockMvcRequestPostProcessors.jwt()
-                .jwt(jwt -> jwt
-                        .claim("name", "Test User")
-                        .claim("custom:cpf", "12345678909")
-                        .claim("cognito:groups", java.util.List.of("Admin"))
-                )
-                .authorities(new SimpleGrantedAuthority("ROLE_Admin"));
-    }
-
-    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor createMockJwtWithoutAdminRole() {
-        return SecurityMockMvcRequestPostProcessors.jwt()
-                .jwt(jwt -> jwt
-                        .claim("name", "Regular User")
-                        .claim("custom:cpf", "98765432100")
-                );
-    }
-
     @Test
     @DisplayName("Should create vehicle successfully")
     void shouldCreateVehicleSuccessfully() throws Exception {
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk())
@@ -98,14 +79,14 @@ class VehicleControllerIntegrationTest {
     void shouldReturn409WhenCreatingVehicleWithDuplicateVin() throws Exception {
         // First creation
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
         // Second creation with same VIN
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isConflict())
@@ -126,7 +107,7 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidVehicle)))
                 .andExpect(status().isBadRequest());
@@ -136,13 +117,13 @@ class VehicleControllerIntegrationTest {
     @DisplayName("Should get vehicle by VIN successfully")
     void shouldGetVehicleByVinSuccessfully() throws Exception {
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/vehicles/{vin}", "1HGBH41JXMN109186")
-                        .with(createMockJwtWithoutAdminRole()))
+                        .with(JwtTestHelper.createRegularUserJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.vin").value("1HGBH41JXMN109186"))
                 .andExpect(jsonPath("$.make").value("Honda"))
@@ -153,7 +134,7 @@ class VehicleControllerIntegrationTest {
     @DisplayName("Should return 404 when vehicle VIN not found")
     void shouldReturn404WhenVehicleVinNotFound() throws Exception {
         mockMvc.perform(get("/api/v1/vehicles/{vin}", "NONEXISTENT")
-                        .with(createMockJwt()))
+                        .with(JwtTestHelper.createAdminJwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value(containsString("NONEXISTENT")));
     }
@@ -162,7 +143,7 @@ class VehicleControllerIntegrationTest {
     @DisplayName("Should get all available vehicles")
     void shouldGetAllAvailableVehicles() throws Exception {
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
@@ -178,13 +159,13 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondVehicle)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/vehicles/available")
-                        .with(createMockJwtWithoutAdminRole()))
+                        .with(JwtTestHelper.createRegularUserJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[*].status", everyItem(is("AVAILABLE"))))
@@ -206,13 +187,13 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(soldVehicle)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/vehicles/sold")
-                        .with(createMockJwtWithoutAdminRole()))
+                        .with(JwtTestHelper.createRegularUserJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].status").value("SOLD"));
@@ -223,7 +204,7 @@ class VehicleControllerIntegrationTest {
     void shouldUpdateVehicleSuccessfully() throws Exception {
         // Create vehicle first
         String createResponse = mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk())
@@ -242,7 +223,7 @@ class VehicleControllerIntegrationTest {
         updateDTO.setPrice(new BigDecimal("28000.00"));
 
         mockMvc.perform(put("/api/v1/vehicles/{id}", vehicleId)
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
@@ -268,7 +249,7 @@ class VehicleControllerIntegrationTest {
         String fakeId = "123e4567-e89b-12d3-a456-426614174000";
 
         mockMvc.perform(put("/api/v1/vehicles/{id}", fakeId)
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isNotFound());
@@ -278,7 +259,7 @@ class VehicleControllerIntegrationTest {
     @DisplayName("Should filter vehicles correctly by status")
     void shouldFilterVehiclesCorrectlyByStatus() throws Exception {
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
@@ -294,19 +275,19 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(soldVehicle)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/vehicles/available")
-                        .with(createMockJwtWithoutAdminRole()))
+                        .with(JwtTestHelper.createRegularUserJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].status").value("AVAILABLE"));
 
         mockMvc.perform(get("/api/v1/vehicles/sold")
-                        .with(createMockJwtWithoutAdminRole()))
+                        .with(JwtTestHelper.createRegularUserJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].status").value("SOLD"));
@@ -346,25 +327,25 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(expensiveVehicle)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(cheapVehicle)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(midPriceVehicle)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/vehicles/available")
-                        .with(createMockJwtWithoutAdminRole()))
+                        .with(JwtTestHelper.createRegularUserJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[0].price").value(15000.00))
@@ -395,19 +376,19 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(expensiveSold)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(cheapSold)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/v1/vehicles/sold")
-                        .with(createMockJwtWithoutAdminRole()))
+                        .with(JwtTestHelper.createRegularUserJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].price").value(35000.00))
@@ -420,7 +401,7 @@ class VehicleControllerIntegrationTest {
     @DisplayName("Should return 403 when non-admin user tries to create vehicle")
     void shouldReturn403WhenNonAdminUserTriesToCreateVehicle() throws Exception {
         mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwtWithoutAdminRole())
+                        .with(JwtTestHelper.createRegularUserJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isForbidden())
@@ -433,7 +414,7 @@ class VehicleControllerIntegrationTest {
     @DisplayName("Should return 403 when non-admin user tries to update vehicle")
     void shouldReturn403WhenNonAdminUserTriesToUpdateVehicle() throws Exception {
         String createVehicleResponse = mockMvc.perform(post("/api/v1/vehicles")
-                        .with(createMockJwt())
+                        .with(JwtTestHelper.createAdminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk())
@@ -452,7 +433,7 @@ class VehicleControllerIntegrationTest {
         updateDTO.setPrice(new BigDecimal("28000.00"));
 
         mockMvc.perform(put("/api/v1/vehicles/{id}", vehicleId)
-                        .with(createMockJwtWithoutAdminRole())
+                        .with(JwtTestHelper.createRegularUserJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isForbidden())
