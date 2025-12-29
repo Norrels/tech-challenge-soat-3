@@ -104,8 +104,6 @@
 							<excludes>
 								<exclude>**/DealershipApiApplication.class</exclude>
 								<exclude>**/security/**Config.class</exclude>
-								<exclude>**/security/**Filter.class</exclude>
-								<exclude>**/security/alb/**/*.class</exclude>
 								<exclude>**/dto/**/*.class</exclude>
 								<exclude>**/models/**/*.class</exclude>
 								<exclude>**/mapper/**/*.class</exclude>
@@ -121,8 +119,6 @@
 							<excludes>
 								<exclude>**/DealershipApiApplication.class</exclude>
 								<exclude>**/security/**Config.class</exclude>
-								<exclude>**/security/**Filter.class</exclude>
-								<exclude>**/security/alb/**/*.class</exclude>
 								<exclude>**/dto/**/*.class</exclude>
 								<exclude>**/models/**/*.class</exclude>
 								<exclude>**/mapper/**/*.class</exclude>
