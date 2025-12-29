@@ -28,6 +28,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/health").permitAll()
                 .anyRequest().authenticated()
             )   .addFilterBefore(albJwtHeaderFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2ResourceServer(oauth -> oauth
