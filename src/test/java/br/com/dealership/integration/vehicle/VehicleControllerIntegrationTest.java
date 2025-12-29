@@ -15,10 +15,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 
 import java.math.BigDecimal;
 
 import static org.hamcrest.Matchers.*;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -38,7 +41,9 @@ class VehicleControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .apply(springSecurity())
+                .build();
         objectMapper = new ObjectMapper();
 
         createVehicleDTO = new CreateVehicleDTO(
@@ -52,10 +57,29 @@ class VehicleControllerIntegrationTest {
         );
     }
 
+    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor createMockJwt() {
+        return SecurityMockMvcRequestPostProcessors.jwt()
+                .jwt(jwt -> jwt
+                        .claim("name", "Test User")
+                        .claim("custom:cpf", "12345678909")
+                        .claim("cognito:groups", java.util.List.of("Admin"))
+                )
+                .authorities(new SimpleGrantedAuthority("ROLE_Admin"));
+    }
+
+    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor createMockJwtWithoutAdminRole() {
+        return SecurityMockMvcRequestPostProcessors.jwt()
+                .jwt(jwt -> jwt
+                        .claim("name", "Regular User")
+                        .claim("custom:cpf", "98765432100")
+                );
+    }
+
     @Test
     @DisplayName("Should create vehicle successfully")
     void shouldCreateVehicleSuccessfully() throws Exception {
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk())
@@ -74,12 +98,14 @@ class VehicleControllerIntegrationTest {
     void shouldReturn409WhenCreatingVehicleWithDuplicateVin() throws Exception {
         // First creation
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
         // Second creation with same VIN
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isConflict())
@@ -100,6 +126,7 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidVehicle)))
                 .andExpect(status().isBadRequest());
@@ -108,14 +135,14 @@ class VehicleControllerIntegrationTest {
     @Test
     @DisplayName("Should get vehicle by VIN successfully")
     void shouldGetVehicleByVinSuccessfully() throws Exception {
-        // Create vehicle first
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
-        // Get vehicle by VIN
-        mockMvc.perform(get("/api/v1/vehicles/{vin}", "1HGBH41JXMN109186"))
+        mockMvc.perform(get("/api/v1/vehicles/{vin}", "1HGBH41JXMN109186")
+                        .with(createMockJwtWithoutAdminRole()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.vin").value("1HGBH41JXMN109186"))
                 .andExpect(jsonPath("$.make").value("Honda"))
@@ -125,7 +152,8 @@ class VehicleControllerIntegrationTest {
     @Test
     @DisplayName("Should return 404 when vehicle VIN not found")
     void shouldReturn404WhenVehicleVinNotFound() throws Exception {
-        mockMvc.perform(get("/api/v1/vehicles/{vin}", "NONEXISTENT"))
+        mockMvc.perform(get("/api/v1/vehicles/{vin}", "NONEXISTENT")
+                        .with(createMockJwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value(containsString("NONEXISTENT")));
     }
@@ -133,8 +161,8 @@ class VehicleControllerIntegrationTest {
     @Test
     @DisplayName("Should get all available vehicles")
     void shouldGetAllAvailableVehicles() throws Exception {
-        // Create two available vehicles
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
@@ -150,12 +178,13 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondVehicle)))
                 .andExpect(status().isOk());
 
-        // Get all available vehicles - should be ordered by price (ascending)
-        mockMvc.perform(get("/api/v1/vehicles/available"))
+        mockMvc.perform(get("/api/v1/vehicles/available")
+                        .with(createMockJwtWithoutAdminRole()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[*].status", everyItem(is("AVAILABLE"))))
@@ -166,7 +195,6 @@ class VehicleControllerIntegrationTest {
     @Test
     @DisplayName("Should get all sold vehicles")
     void shouldGetAllSoldVehicles() throws Exception {
-        // Create a sold vehicle
         CreateVehicleDTO soldVehicle = new CreateVehicleDTO(
                 "Ford",
                 "Mustang",
@@ -178,12 +206,13 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(soldVehicle)))
                 .andExpect(status().isOk());
 
-        // Get all sold vehicles
-        mockMvc.perform(get("/api/v1/vehicles/sold"))
+        mockMvc.perform(get("/api/v1/vehicles/sold")
+                        .with(createMockJwtWithoutAdminRole()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].status").value("SOLD"));
@@ -194,6 +223,7 @@ class VehicleControllerIntegrationTest {
     void shouldUpdateVehicleSuccessfully() throws Exception {
         // Create vehicle first
         String createResponse = mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk())
@@ -203,7 +233,6 @@ class VehicleControllerIntegrationTest {
 
         String vehicleId = objectMapper.readTree(createResponse).get("id").asText();
 
-        // Update vehicle
         UpdateVehicleDTO updateDTO = new UpdateVehicleDTO();
         updateDTO.setMake("Honda");
         updateDTO.setModel("Accord");
@@ -213,6 +242,7 @@ class VehicleControllerIntegrationTest {
         updateDTO.setPrice(new BigDecimal("28000.00"));
 
         mockMvc.perform(put("/api/v1/vehicles/{id}", vehicleId)
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
@@ -238,6 +268,7 @@ class VehicleControllerIntegrationTest {
         String fakeId = "123e4567-e89b-12d3-a456-426614174000";
 
         mockMvc.perform(put("/api/v1/vehicles/{id}", fakeId)
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isNotFound());
@@ -246,13 +277,12 @@ class VehicleControllerIntegrationTest {
     @Test
     @DisplayName("Should filter vehicles correctly by status")
     void shouldFilterVehiclesCorrectlyByStatus() throws Exception {
-        // Create available vehicle
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createVehicleDTO)))
                 .andExpect(status().isOk());
 
-        // Create sold vehicle
         CreateVehicleDTO soldVehicle = new CreateVehicleDTO(
                 "BMW",
                 "X5",
@@ -264,18 +294,19 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(soldVehicle)))
                 .andExpect(status().isOk());
 
-        // Get available vehicles - should return 1
-        mockMvc.perform(get("/api/v1/vehicles/available"))
+        mockMvc.perform(get("/api/v1/vehicles/available")
+                        .with(createMockJwtWithoutAdminRole()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].status").value("AVAILABLE"));
 
-        // Get sold vehicles - should return 1
-        mockMvc.perform(get("/api/v1/vehicles/sold"))
+        mockMvc.perform(get("/api/v1/vehicles/sold")
+                        .with(createMockJwtWithoutAdminRole()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].status").value("SOLD"));
@@ -284,7 +315,6 @@ class VehicleControllerIntegrationTest {
     @Test
     @DisplayName("Should return vehicles ordered by price ascending")
     void shouldReturnVehiclesOrderedByPriceAscending() throws Exception {
-        // Create multiple vehicles with different prices
         CreateVehicleDTO expensiveVehicle = new CreateVehicleDTO(
                 "BMW",
                 "X5",
@@ -315,24 +345,26 @@ class VehicleControllerIntegrationTest {
                 new BigDecimal("28000.00")
         );
 
-        // Create in random order
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(expensiveVehicle)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(cheapVehicle)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(midPriceVehicle)))
                 .andExpect(status().isOk());
 
-        // Get all available vehicles - should be ordered by price (cheapest first)
-        mockMvc.perform(get("/api/v1/vehicles/available"))
+        mockMvc.perform(get("/api/v1/vehicles/available")
+                        .with(createMockJwtWithoutAdminRole()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[0].price").value(15000.00))
@@ -342,7 +374,6 @@ class VehicleControllerIntegrationTest {
                 .andExpect(jsonPath("$[2].price").value(55000.00))
                 .andExpect(jsonPath("$[2].model").value("X5"));
 
-        // Create sold vehicles with different prices
         CreateVehicleDTO expensiveSold = new CreateVehicleDTO(
                 "Porsche",
                 "911",
@@ -364,22 +395,69 @@ class VehicleControllerIntegrationTest {
         );
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(expensiveSold)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(cheapSold)))
                 .andExpect(status().isOk());
 
-        // Get all sold vehicles - should be ordered by price (cheapest first)
-        mockMvc.perform(get("/api/v1/vehicles/sold"))
+        mockMvc.perform(get("/api/v1/vehicles/sold")
+                        .with(createMockJwtWithoutAdminRole()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].price").value(35000.00))
                 .andExpect(jsonPath("$[0].model").value("Onix"))
                 .andExpect(jsonPath("$[1].price").value(120000.00))
                 .andExpect(jsonPath("$[1].model").value("911"));
+    }
+
+    @Test
+    @DisplayName("Should return 403 when non-admin user tries to create vehicle")
+    void shouldReturn403WhenNonAdminUserTriesToCreateVehicle() throws Exception {
+        mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwtWithoutAdminRole())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createVehicleDTO)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"))
+                .andExpect(jsonPath("$.message").value(containsString("permission")));
+    }
+
+    @Test
+    @DisplayName("Should return 403 when non-admin user tries to update vehicle")
+    void shouldReturn403WhenNonAdminUserTriesToUpdateVehicle() throws Exception {
+        String createVehicleResponse = mockMvc.perform(post("/api/v1/vehicles")
+                        .with(createMockJwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createVehicleDTO)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String vehicleId = objectMapper.readTree(createVehicleResponse).get("id").asText();
+
+        UpdateVehicleDTO updateDTO = new UpdateVehicleDTO();
+        updateDTO.setMake("Honda");
+        updateDTO.setModel("Accord");
+        updateDTO.setYear(2024);
+        updateDTO.setColor("Blue");
+        updateDTO.setStatus(VehicleStatus.AVAILABLE);
+        updateDTO.setPrice(new BigDecimal("28000.00"));
+
+        mockMvc.perform(put("/api/v1/vehicles/{id}", vehicleId)
+                        .with(createMockJwtWithoutAdminRole())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"))
+                .andExpect(jsonPath("$.message").value(containsString("permission")));
     }
 }
