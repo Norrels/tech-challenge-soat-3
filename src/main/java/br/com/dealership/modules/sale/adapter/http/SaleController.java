@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/sales")
+@RequestMapping("/api/v1/sales")
 @Tag(name = "Sales", description = "Sales management endpoints")
 public class SaleController {
     private final SaleService saleService;
