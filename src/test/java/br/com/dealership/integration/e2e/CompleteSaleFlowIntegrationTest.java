@@ -87,7 +87,7 @@ class CompleteSaleFlowIntegrationTest {
         saleDTO.setVehicleVin("1HGBH41JXMN109999");
         saleDTO.setSalePrice(32000.0);
 
-        String saleResponse = mockMvc.perform(post("/sales")
+        String saleResponse = mockMvc.perform(post("/api/v1/sales")
                         .with(JwtTestHelper.createAdminJwt("Maria Silva", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(saleDTO)))
@@ -103,14 +103,14 @@ class CompleteSaleFlowIntegrationTest {
         String saleId = objectMapper.readTree(saleResponse).get("id").asText();
 
         // STEP 4: Verify sale appears in all sales
-        mockMvc.perform(get("/sales")
+        mockMvc.perform(get("/api/v1/sales")
                         .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.id == '" + saleId + "')]").exists())
                 .andExpect(jsonPath("$[?(@.id == '" + saleId + "')].status").value("PENDING"));
 
         // STEP 5: Verify sale appears when filtering by customer CPF
-        mockMvc.perform(get("/sales")
+        mockMvc.perform(get("/api/v1/sales")
                         .with(JwtTestHelper.createAdminJwt("Default User", "12345678909"))
                         .param("cpf", "12345678909"))
                 .andExpect(status().isOk())
@@ -121,13 +121,13 @@ class CompleteSaleFlowIntegrationTest {
         // STEP 6: Process payment webhook with success
         WebhookStatusDTO paymentSuccess = new WebhookStatusDTO(true, "12345678909");
 
-        mockMvc.perform(post("/sales/payment-webhook/{id}", saleId)
+        mockMvc.perform(post("/api/v1/sales/payment-webhook/{id}", saleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(paymentSuccess)))
                 .andExpect(status().isOk());
 
         // STEP 7: Verify sale status changed to COMPLETED
-        mockMvc.perform(get("/sales/{id}", saleId)
+        mockMvc.perform(get("/api/v1/sales/{id}", saleId)
                         .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(saleId))
@@ -184,7 +184,7 @@ class CompleteSaleFlowIntegrationTest {
         saleDTO.setVehicleVin("TOYOTA123456789VIN");
         saleDTO.setSalePrice(28000.0);
 
-        String saleResponse = mockMvc.perform(post("/sales")
+        String saleResponse = mockMvc.perform(post("/api/v1/sales")
                         .with(JwtTestHelper.createAdminJwt("João Santos", "98765432100"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(saleDTO)))
@@ -199,13 +199,13 @@ class CompleteSaleFlowIntegrationTest {
         // STEP 3: Process payment webhook with FAILURE
         WebhookStatusDTO paymentFailure = new WebhookStatusDTO(false, "98765432100");
 
-        mockMvc.perform(post("/sales/payment-webhook/{id}", saleId)
+        mockMvc.perform(post("/api/v1/sales/payment-webhook/{id}", saleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(paymentFailure)))
                 .andExpect(status().isOk());
 
         // STEP 4: Verify sale status changed to CANCELED
-        mockMvc.perform(get("/sales/{id}", saleId)
+        mockMvc.perform(get("/api/v1/sales/{id}", saleId)
                         .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELED"));
@@ -249,7 +249,7 @@ class CompleteSaleFlowIntegrationTest {
         firstSale.setVehicleVin("BMW123456789VIN");
         firstSale.setSalePrice(55000.0);
 
-        String firstSaleResponse = mockMvc.perform(post("/sales")
+        String firstSaleResponse = mockMvc.perform(post("/api/v1/sales")
                         .with(JwtTestHelper.createAdminJwt("Customer One", "12345678909"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(firstSale)))
@@ -263,7 +263,7 @@ class CompleteSaleFlowIntegrationTest {
         // STEP 3: Complete first sale
         WebhookStatusDTO paymentSuccess = new WebhookStatusDTO(true, "12345678909");
 
-        mockMvc.perform(post("/sales/payment-webhook/{id}", firstSaleId)
+        mockMvc.perform(post("/api/v1/sales/payment-webhook/{id}", firstSaleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(paymentSuccess)))
                 .andExpect(status().isOk());
@@ -279,7 +279,7 @@ class CompleteSaleFlowIntegrationTest {
         secondSale.setVehicleVin("BMW123456789VIN");
         secondSale.setSalePrice(55000.0);
 
-        mockMvc.perform(post("/sales")
+        mockMvc.perform(post("/api/v1/sales")
                         .with(JwtTestHelper.createAdminJwt("Customer Two", "98765432100"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(secondSale)))
@@ -318,7 +318,7 @@ class CompleteSaleFlowIntegrationTest {
             saleDTO.setVehicleVin(vins[i]);
             saleDTO.setSalePrice(30000.0);
 
-            String saleResponse = mockMvc.perform(post("/sales")
+            String saleResponse = mockMvc.perform(post("/api/v1/sales")
                             .with(JwtTestHelper.createAdminJwt(customers[i], cpfs[i]))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(saleDTO)))
@@ -332,14 +332,14 @@ class CompleteSaleFlowIntegrationTest {
             // Complete payment
             WebhookStatusDTO payment = new WebhookStatusDTO(true, cpfs[i]);
 
-            mockMvc.perform(post("/sales/payment-webhook/{id}", saleId)
+            mockMvc.perform(post("/api/v1/sales/payment-webhook/{id}", saleId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(payment)))
                     .andExpect(status().isOk());
         }
 
         // Verify all sales are completed
-        mockMvc.perform(get("/sales")
+        mockMvc.perform(get("/api/v1/sales")
                         .with(JwtTestHelper.createAdminJwt("Default User", "12345678909")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
