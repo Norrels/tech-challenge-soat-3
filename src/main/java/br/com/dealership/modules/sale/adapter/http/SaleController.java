@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -83,6 +84,7 @@ public class SaleController {
 
     @PostMapping("/payment-webhook/{id}")
     @Operation(summary = "Payment webhook", description = "Webhook endpoint for payment status updates")
+    @SecurityRequirements()
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
