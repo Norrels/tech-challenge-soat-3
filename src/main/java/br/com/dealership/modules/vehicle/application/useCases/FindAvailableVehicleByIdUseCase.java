@@ -19,7 +19,8 @@ public class FindAvailableVehicleByIdUseCase implements FindAvailableVehicleById
                 new FindVehicleDTO(
                         vehicle.getId(),
                         vehicle.getVin(),
-                        vehicle.getStatus()
+                        vehicle.getStatus(),
+                        vehicle.getPrice()
                 )
         );
     }

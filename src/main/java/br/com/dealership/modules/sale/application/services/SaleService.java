@@ -44,6 +44,10 @@ public class SaleService implements SaleServicePort {
             throw new InvalidSaleException("Vehicle with VIN " + sale.getVehicleVin() + " is not available for sale");
         }
 
+        if(sale.getSalePrice() < vehicle.price().doubleValue()) {
+            throw new InvalidSaleException("Sale price cannot be less than the vehicle price");
+        }
+
         sale.setVihicleId(vehicle.vehicleId());
         return createSaleUseCase.execute(sale);
     }
