@@ -44,3 +44,5 @@ src/test/
 
 # Development
 run-dev.bat
+
+.env
