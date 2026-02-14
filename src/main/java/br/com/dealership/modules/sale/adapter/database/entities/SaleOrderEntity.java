@@ -5,6 +5,7 @@ import br.com.dealership.modules.sale.domain.entities.SaleStatus;
 import br.com.dealership.modules.sale.domain.entities.valueobjects.CPF;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -34,16 +35,20 @@ public class SaleOrderEntity {
     @Column(name = "status", nullable = false)
     private SaleStatus status;
 
+    @Column(name = "sale_date")
+    private LocalDateTime saleDate;
+
     public SaleOrderEntity() {
     }
 
-    public SaleOrderEntity(Long id, String customerName, CPF customerCpf, String vehicleVin, Double salePrice, UUID vehicleId, SaleStatus status) {
+    public SaleOrderEntity(Long id, String customerName, CPF customerCpf, String vehicleVin, Double salePrice, UUID vehicleId, SaleStatus status, LocalDateTime saleDate) {
         this.id = id;
         this.customerName = customerName;
         this.customerCpf = customerCpf;
         this.vehicleVin = vehicleVin;
         this.salePrice = salePrice;
         this.vehicleId = vehicleId;
+        this.saleDate = saleDate;
 
         if(status == null) {
             this.status = SaleStatus.PENDING;
@@ -106,5 +111,13 @@ public class SaleOrderEntity {
 
     public void setStatus(SaleStatus status) {
         this.status = status;
+    }
+
+    public LocalDateTime getSaleDate() {
+        return saleDate;
+    }
+
+    public void setSaleDate(LocalDateTime saleDate) {
+        this.saleDate = saleDate;
     }
 }

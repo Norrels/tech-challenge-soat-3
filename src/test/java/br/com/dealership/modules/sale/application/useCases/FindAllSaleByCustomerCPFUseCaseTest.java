@@ -33,8 +33,8 @@ class FindAllSaleByCustomerCPFUseCaseTest {
     @DisplayName("Should find all sales by customer CPF successfully")
     void shouldFindAllSalesByCustomerCpfSuccessfully() {
         String validCpf = "12345678909";
-        SaleOrder sale1 = new SaleOrder(1L, "John Doe", new CPF(validCpf), "VIN1", 25000.0, UUID.randomUUID(), SaleStatus.PENDING);
-        SaleOrder sale2 = new SaleOrder(2L, "John Doe", new CPF(validCpf), "VIN2", 30000.0, UUID.randomUUID(), SaleStatus.COMPLETED);
+        SaleOrder sale1 = new SaleOrder(1L, "John Doe", new CPF(validCpf), "VIN1", 25000.0, UUID.randomUUID(), SaleStatus.PENDING, null);
+        SaleOrder sale2 = new SaleOrder(2L, "John Doe", new CPF(validCpf), "VIN2", 30000.0, UUID.randomUUID(), SaleStatus.COMPLETED, null);
         List<SaleOrder> expectedSales = Arrays.asList(sale1, sale2);
         when(saleRepositoryPort.getAllSalesByCustomerCpf(validCpf)).thenReturn(expectedSales);
 
@@ -50,7 +50,7 @@ class FindAllSaleByCustomerCPFUseCaseTest {
     @DisplayName("Should find all sales by customer CPF with formatting")
     void shouldFindAllSalesByCustomerCpfWithFormatting() {
         String validCpf = "123.456.789-09";
-        SaleOrder sale = new SaleOrder(1L, "Jane Doe", new CPF("12345678909"), "VIN1", 25000.0, UUID.randomUUID(), SaleStatus.PENDING);
+        SaleOrder sale = new SaleOrder(1L, "Jane Doe", new CPF("12345678909"), "VIN1", 25000.0, UUID.randomUUID(), SaleStatus.PENDING, null);
         List<SaleOrder> expectedSales = Collections.singletonList(sale);
         when(saleRepositoryPort.getAllSalesByCustomerCpf(validCpf)).thenReturn(expectedSales);
 

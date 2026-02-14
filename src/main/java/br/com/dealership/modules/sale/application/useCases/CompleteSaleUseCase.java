@@ -25,7 +25,7 @@ public class CompleteSaleUseCase {
         }
 
         if (paymentSuccess) {
-            saleOrder.setStatus(SaleStatus.COMPLETED);
+            saleOrder.markAsPaid();
         } else {
             saleOrder.setStatus(SaleStatus.CANCELED);
         }

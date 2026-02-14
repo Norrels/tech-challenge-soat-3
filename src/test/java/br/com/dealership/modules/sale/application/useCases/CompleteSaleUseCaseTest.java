@@ -40,7 +40,8 @@ class CompleteSaleUseCaseTest {
                 "1HGBH41JXMN109186",
                 25000.0,
                 UUID.randomUUID(),
-                SaleStatus.PENDING
+                SaleStatus.PENDING,
+                null
         );
     }
 
