@@ -13,11 +13,12 @@ O Dealership API é um sistema de gerenciamento para concessionárias que permit
   - Spring Data JPA
   - Spring Security (OAuth2 Resource Server)
   - Spring Validation
-- **PostgreSQL** (produção)
+- **PostgreSQL** (Neon - produção)
 - **H2** (testes)
 - **AWS Cognito** (autenticação JWT)
 - **SpringDoc OpenAPI 2.8.4** (documentação)
 - **Docker** e **Docker Compose**
+- **Kubernetes** (orquestração de containers)
 - **Maven 3.9.6**
 - **JUnit 5** e **JaCoCo** (cobertura de testes)
 
@@ -46,6 +47,31 @@ O projeto segue os princípios da **Arquitetura Hexagonal (Ports & Adapters)** c
 └─────────────────────────────────────┘
 ```
 
+### Estrutura de Diretórios
+
+```
+src/main/java/br/com/dealership/
+├── config/                    # Configurações globais (OpenAPI, Jackson)
+├── exception/                 # Tratamento global de exceções
+├── health/                    # Endpoint de health check
+├── security/                  # Configuração OAuth2/JWT
+└── modules/
+    ├── vehicle/               # Módulo de Veículos
+    │   ├── adapter/
+    │   │   ├── database/      # Entidades JPA e Repositories
+    │   │   └── http/          # Controllers e DTOs
+    │   ├── application/
+    │   │   ├── services/      # Orquestração de casos de uso
+    │   │   └── useCases/      # Casos de uso individuais
+    │   ├── domain/
+    │   │   ├── entities/      # Entidades de domínio
+    │   │   ├── exception/     # Exceções de domínio
+    │   │   └── ports/         # Interfaces (in/out)
+    │   └── mapper/            # Mapeamento entre camadas
+    ├── sale/                  # Módulo de Vendas (mesma estrutura)
+    └── shared/                # Portas compartilhadas entre módulos
+```
+
 ### Módulos
 
 #### 1. Vehicle Module
@@ -58,22 +84,22 @@ Responsável pelo gerenciamento de veículos.
 **Principais Casos de Uso:**
 - `CreateVehicleUseCase`: Criação de veículos (apenas Admin)
 - `GetVehicleByVinUseCase`: Busca por VIN
-- `GetVehicleByStatusUseCase`: Filtragem por status
+- `GetVehicleByStatusUseCase`: Filtragem por status (ordenado por preço)
 - `UpdateVehicleUseCase`: Atualização de dados (apenas Admin)
 - `MarkVehicleAsSoldUseCase`: Marcação de veículo como vendido
 
 **Endpoints:**
 - `POST /api/v1/vehicles` - Criar veículo (Admin)
 - `GET /api/v1/vehicles/{vin}` - Buscar por VIN
-- `GET /api/v1/vehicles/available` - Listar veículos disponíveis
-- `GET /api/v1/vehicles/sold` - Listar veículos vendidos
+- `GET /api/v1/vehicles/available` - Listar veículos disponíveis (ordenado por preço)
+- `GET /api/v1/vehicles/sold` - Listar veículos vendidos (ordenado por preço)
 - `PUT /api/v1/vehicles/{id}` - Atualizar veículo (Admin)
 
 #### 2. Sale Module
 Responsável pelo gerenciamento de vendas.
 
 **Entidade Principal:** `SaleOrder`
-- Atributos: id, customerName, customerCpf, vehicleVin, salePrice, vehicleId, status
+- Atributos: id, customerName, customerCpf, vehicleVin, salePrice, vehicleId, status, saleDate
 - Status: PENDING, COMPLETED, CANCELED
 
 **Value Object:** `CPF`
@@ -86,34 +112,27 @@ Responsável pelo gerenciamento de vendas.
 - `FindSaleByIdUseCase`: Busca por ID
 - `FindAllSalesUseCase`: Listagem de vendas
 - `FindAllSaleByCustomerCPFUseCase`: Busca por CPF do cliente
-- `CompleteSaleUseCase`: Finalização da venda
+- `CompleteSaleUseCase`: Finalização da venda (preenche saleDate)
 
 **Endpoints:**
-- `POST /sales` - Criar ordem de venda
-- `GET /sales/{id}` - Buscar venda por ID
-- `GET /sales?cpf={cpf}` - Listar vendas (filtro opcional por CPF)
-- `POST /sales/payment-webhook/{id}` - Webhook de pagamento (sem autenticação)
+- `POST /api/v1/sales` - Criar ordem de venda
+- `GET /api/v1/sales/{id}` - Buscar venda por ID
+- `GET /api/v1/sales?cpf={cpf}` - Listar vendas (filtro opcional por CPF)
+- `POST /api/v1/sales/payment-webhook/{id}` - Webhook de pagamento (sem autenticação)
 
 #### 3. Shared Module
 
-O módulo **shared** é fundamental para a arquitetura do sistema. Ele implementa o conceito de **Portas (Ports)** da Arquitetura Hexagonal, servindo como camada de integração entre módulos.
+O módulo **shared** implementa o conceito de **Portas (Ports)** da Arquitetura Hexagonal, servindo como camada de integração entre módulos.
 
 **Propósito:**
 - **Desacoplamento:** Módulos se comunicam através de interfaces, não de implementações concretas
 - **Inversão de Dependências:** O módulo Sale depende de portas definidas no Shared, implementadas pelo módulo Vehicle
 - **Contratos Bem Definidos:** DTOs e interfaces compartilhadas garantem contratos claros entre módulos
 
-**Componentes Principais:**
-- `FindAvailableVehicleByIdUseCasePort`: Interface para buscar veículos disponíveis
-- `MarkVehicleAsSoldUseCasePort`: Interface para marcar veículo como vendido
-- `FindVehicleDTO`: DTO para transferência de dados de veículos entre módulos
-
 **Fluxo de Dependências:**
 ```
 Sale Module (Domínio) → Shared (Portas) ← Vehicle Module (Adaptador)
 ```
-
-Essa abordagem permite que o módulo de vendas realize operações sobre veículos sem conhecer detalhes de implementação, facilitando testes, manutenção e evolução independente dos módulos.
 
 ## Segurança
 
@@ -132,7 +151,7 @@ A aplicação utiliza **OAuth2 Resource Server** com tokens JWT fornecidos pelo 
 - `/health` - Health check
 - `/api-docs/**` - Documentação OpenAPI
 - `/swagger-ui/**` - Interface Swagger
-- `/sales/payment-webhook/**` - Webhook de pagamento
+- `/api/v1/sales/payment-webhook/**` - Webhook de pagamento
 
 ## Como Usar Localmente
 
@@ -140,10 +159,10 @@ A aplicação utiliza **OAuth2 Resource Server** com tokens JWT fornecidos pelo 
 
 - Java 21 JDK
 - Maven 3.9.6+
-- Docker e Docker Compose (opcional, mas recomendado)
-- PostgreSQL 15+ (se não usar Docker)
+- Docker e Docker Compose
+- kubectl (para Kubernetes)
 
-### Opção 1: Usando Docker Compose (Recomendado)
+### Opção 1: Usando Docker Compose
 
 1. Clone o repositório:
 ```bash
@@ -169,25 +188,43 @@ docker-compose up -d
 
 A aplicação estará disponível em `http://localhost:8080`.
 
-### Opção 2: Execução Manual
+### Opção 2: Usando Kubernetes
 
-1. Configure o PostgreSQL e crie o banco de dados:
-```sql
-CREATE DATABASE dealership_db;
+1. Construa e publique a imagem Docker:
+```bash
+docker build -t seuusuario/dealership-api:v1.0.0 .
+docker push seuusuario/dealership-api:v1.0.0
 ```
 
-2. Configure as variáveis de ambiente ou edite `src/main/resources/application.yaml`:
+2. Configure os secrets (copie o template e edite):
 ```bash
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/dealership_db
-export SPRING_DATASOURCE_USERNAME=postgres
-export SPRING_DATASOURCE_PASSWORD=postgres
-export AWS_COGNITO_ISSUER_URI=https://cognito-idp.<region>.amazonaws.com/<user-pool-id>
+cp k8s/secret.yaml.example k8s/secret.yaml
+# Edite k8s/secret.yaml com suas credenciais
 ```
 
-3. Execute a aplicação:
+3. Atualize a imagem no deployment:
 ```bash
-./mvnw clean install
-./mvnw spring-boot:run
+# Edite k8s/deployment.yaml e altere a linha:
+# image: seuusuario/dealership-api:v1.0.0
+```
+
+4. Aplique os manifestos:
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secret.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+```
+
+5. Verifique o status:
+```bash
+kubectl get pods -n dealership
+```
+
+6. Acesse a aplicação via port-forward:
+```bash
+kubectl port-forward -n dealership svc/dealership-api-service 8080:80
 ```
 
 ### Acessando a Documentação
@@ -196,6 +233,64 @@ Após iniciar a aplicação, acesse:
 
 - **Swagger UI:** http://localhost:8080/swagger-ui.html
 - **OpenAPI JSON:** http://localhost:8080/api-docs
+
+## Kubernetes
+
+### Arquitetura do Cluster
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    Namespace: dealership                     │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────┐     ┌─────────────────────────────────┐     │
+│  │   Service   │───> │            Deployment           │     │
+│  │  ClusterIP  │     │  (3 réplicas com RollingUpdate) │     │
+│  │   :80       │     │                                 │     │
+│  └─────────────┘     │    ┌─────┐  ┌─────┐  ┌─────┐    │     │
+│                      │    │ Pod │  │ Pod │  │ Pod │    │     │
+│                      │    └─────┘  └─────┘  └─────┘    │     │
+│                      └─────────────────────────────────┘     │
+│                                   │                          │
+│                      ┌────────────┴────────────┐             │
+│                      ▼                         ▼             │
+│              ┌─────────────┐          ┌─────────────┐        │
+│              │  ConfigMap  │          │    Secret   │        │
+│              │  (configs)  │          │(credentials)│        │
+│              └─────────────┘          └─────────────┘        │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌────────────────────┐
+                    │  Neon (PostgreSQL) │
+                    │   (Banco Externo)  │
+                    └────────────────────┘
+```
+
+### Manifestos Kubernetes
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `namespace.yaml` | Namespace dedicado `dealership` |
+| `configmap.yaml` | Configurações não sensíveis (Spring profiles, JPA settings) |
+| `secret.yaml.example` | Template para credenciais (DB, Cognito) |
+| `deployment.yaml` | Deployment com 3 réplicas, health probes, resources |
+| `service.yaml` | ClusterIP service para expor a aplicação |
+
+### Recursos do Deployment
+
+- **Réplicas:** 3
+- **Strategy:** RollingUpdate (maxSurge: 1, maxUnavailable: 0)
+- **Resources:**
+  - Requests: 250m CPU, 512Mi RAM
+  - Limits: 500m CPU, 1Gi RAM
+- **Health Probes:**
+  - Liveness: `/health` (initialDelay: 90s)
+  - Readiness: `/health` (initialDelay: 75s)
+- **Security:**
+  - runAsNonRoot: true
+  - allowPrivilegeEscalation: false
 
 ## Como Testar
 
@@ -213,21 +308,6 @@ Após iniciar a aplicação, acesse:
 
 O relatório de cobertura será gerado em `target/site/jacoco/index.html`.
 
-### Estrutura de Testes
-
-**Testes Unitários:**
-- Testes de Use Cases: `src/test/java/br/com/dealership/modules/{module}/application/useCases/`
-- Testes de Entidades: `src/test/java/br/com/dealership/modules/{module}/domain/entities/`
-
-**Testes de Integração:**
-- Controllers: `src/test/java/br/com/dealership/integration/`
-- Fluxo completo: `src/test/java/br/com/dealership/integration/e2e/`
-
-**Utilitários de Teste:**
-- `JwtTestHelper`: Geração de tokens JWT para testes
-  - `createAdminJwt()`: Token com role Admin
-  - `createRegularUserJwt()`: Token de usuário comum
-
 ### Requisitos de Cobertura
 
 O projeto possui as seguintes metas de cobertura (verificadas pelo JaCoCo):
@@ -235,43 +315,32 @@ O projeto possui as seguintes metas de cobertura (verificadas pelo JaCoCo):
 - Cobertura de linhas: mínimo 80%
 - Cobertura de branches: mínimo 70%
 
-### Executar Testes de um Módulo Específico
-
-```bash
-# Testes do módulo Vehicle
-./mvnw test -Dtest="br.com.dealership.modules.vehicle.**"
-
-# Testes do módulo Sale
-./mvnw test -Dtest="br.com.dealership.modules.sale.**"
-
-# Testes de integração
-./mvnw test -Dtest="br.com.dealership.integration.**"
-```
-
 ## Build e Deploy
-
-### Gerar Build Local
-
-```bash
-./mvnw clean package
-java -jar target/dealership-api-0.0.1-SNAPSHOT.jar
-```
 
 ### Build Docker
 
 ```bash
-docker build -t dealership-api:latest .
-docker run -p 8080:8080 --env-file .env dealership-api:latest
+docker build -t dealership-api:v1.0.0 .
+docker run -p 8080:8080 --env-file .env dealership-api:v1.0.0
 ```
 
-### Deploy Automático
+### Deploy no Kubernetes
 
-O projeto possui pipeline de CI/CD configurado no GitHub Actions que realiza:
+```bash
+# Build e push
+docker build -t seuusuario/dealership-api:v1.0.0 .
+docker push seuusuario/dealership-api:v1.0.0
+
+# Deploy
+kubectl apply -f k8s/
+```
+
+### CI/CD
+
+O projeto possui pipeline de CI/CD configurado no GitHub Actions:
 
 1. **PR Checks:** Execução de testes e verificação de cobertura em cada Pull Request
 2. **Deploy:** Build da imagem Docker e push para AWS ECR ao realizar merge na branch master
-
-Mais detalhes podem ser encontrados em [adr/deploy.md](adr/deploy.md).
 
 ## Health Check
 
@@ -288,3 +357,6 @@ Resposta:
 }
 ```
 
+## Licença
+
+Este projeto foi desenvolvido como parte do Tech Challenge SOAT - Pós-Tech FIAP.
