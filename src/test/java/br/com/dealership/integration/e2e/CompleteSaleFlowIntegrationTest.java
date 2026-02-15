@@ -95,7 +95,7 @@ class CompleteSaleFlowIntegrationTest {
                 .andExpect(jsonPath("$.customerName").value("Maria Silva"))
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.vehicleVin").value("1HGBH41JXMN109999"))
-                .andExpect(jsonPath("$.vihicleId").value(vehicleId))
+                .andExpect(jsonPath("$.vehicleId").value(vehicleId))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

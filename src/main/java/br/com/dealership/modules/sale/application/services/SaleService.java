@@ -48,7 +48,7 @@ public class SaleService implements SaleServicePort {
             throw new InvalidSaleException("Sale price cannot be less than the vehicle price");
         }
 
-        sale.setVihicleId(vehicle.vehicleId());
+        sale.setVehicleId(vehicle.vehicleId());
         return createSaleUseCase.execute(sale);
     }
 
@@ -73,7 +73,7 @@ public class SaleService implements SaleServicePort {
 
         SaleOrder completedSale = completeSaleUseCase.execute(id, paymentSuccess);
         if (paymentSuccess) {
-            markVehicleAsSoldUseCase.execute(completedSale.getVihicleId());
+            markVehicleAsSoldUseCase.execute(completedSale.getVehicleId());
         }
     }
 }

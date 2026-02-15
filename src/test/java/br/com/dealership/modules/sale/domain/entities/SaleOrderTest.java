@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,7 +28,8 @@ class SaleOrderTest {
                 "1HGBH41JXMN109186",
                 25000.0,
                 vehicleId,
-                SaleStatus.PENDING
+                SaleStatus.PENDING,
+                null
         );
     }
 
@@ -40,7 +42,7 @@ class SaleOrderTest {
         assertEquals(validCpf, saleOrder.getCustomerCpf());
         assertEquals("1HGBH41JXMN109186", saleOrder.getVehicleVin());
         assertEquals(25000.0, saleOrder.getSalePrice());
-        assertEquals(vehicleId, saleOrder.getVihicleId());
+        assertEquals(vehicleId, saleOrder.getVehicleId());
         assertEquals(SaleStatus.PENDING, saleOrder.getStatus());
     }
 
@@ -137,7 +139,7 @@ class SaleOrderTest {
     @Test
     @DisplayName("Should throw InvalidSaleException when vehicle ID is null")
     void shouldThrowInvalidSaleExceptionWhenVehicleIdIsNull() {
-        saleOrder.setVihicleId(null);
+        saleOrder.setVehicleId(null);
 
         Exception exception = assertThrows(InvalidSaleException.class, () -> {
             saleOrder.validate();
@@ -198,10 +200,12 @@ class SaleOrderTest {
     @DisplayName("Should mark sale as paid successfully when status is PENDING")
     void shouldMarkSaleAsPaidSuccessfullyWhenStatusIsPending() {
         assertEquals(SaleStatus.PENDING, saleOrder.getStatus());
+        assertNull(saleOrder.getSaleDate());
 
         saleOrder.markAsPaid();
 
         assertEquals(SaleStatus.COMPLETED, saleOrder.getStatus());
+        assertNotNull(saleOrder.getSaleDate());
     }
 
     @Test
@@ -240,21 +244,24 @@ class SaleOrderTest {
         Double newPrice = 30000.0;
         UUID newVehicleId = UUID.randomUUID();
         SaleStatus newStatus = SaleStatus.COMPLETED;
+        LocalDateTime newSaleDate = LocalDateTime.now();
 
         saleOrder.setId(newId);
         saleOrder.setCustomerName(newName);
         saleOrder.setCustomerCpf(newCpf);
         saleOrder.setVehicleVin(newVin);
         saleOrder.setSalePrice(newPrice);
-        saleOrder.setVihicleId(newVehicleId);
+        saleOrder.setVehicleId(newVehicleId);
         saleOrder.setStatus(newStatus);
+        saleOrder.setSaleDate(newSaleDate);
 
         assertEquals(newId, saleOrder.getId());
         assertEquals(newName, saleOrder.getCustomerName());
         assertEquals(newCpf, saleOrder.getCustomerCpf());
         assertEquals(newVin, saleOrder.getVehicleVin());
         assertEquals(newPrice, saleOrder.getSalePrice());
-        assertEquals(newVehicleId, saleOrder.getVihicleId());
+        assertEquals(newVehicleId, saleOrder.getVehicleId());
         assertEquals(newStatus, saleOrder.getStatus());
+        assertEquals(newSaleDate, saleOrder.getSaleDate());
     }
 }

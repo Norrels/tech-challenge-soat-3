@@ -31,9 +31,9 @@ class FindAllSalesUseCaseTest {
     @Test
     @DisplayName("Should find all sales successfully")
     void shouldFindAllSalesSuccessfully() {
-        SaleOrder sale1 = new SaleOrder(1L, "John Doe", new CPF("12345678909"), "VIN1", 25000.0, UUID.randomUUID(), SaleStatus.PENDING);
-        SaleOrder sale2 = new SaleOrder(2L, "Jane Doe", new CPF("98765432100"), "VIN2", 30000.0, UUID.randomUUID(), SaleStatus.COMPLETED);
-        SaleOrder sale3 = new SaleOrder(3L, "Bob Smith", new CPF("11144477735"), "VIN3", 35000.0, UUID.randomUUID(), SaleStatus.CANCELED);
+        SaleOrder sale1 = new SaleOrder(1L, "John Doe", new CPF("12345678909"), "VIN1", 25000.0, UUID.randomUUID(), SaleStatus.PENDING, null);
+        SaleOrder sale2 = new SaleOrder(2L, "Jane Doe", new CPF("98765432100"), "VIN2", 30000.0, UUID.randomUUID(), SaleStatus.COMPLETED, null);
+        SaleOrder sale3 = new SaleOrder(3L, "Bob Smith", new CPF("11144477735"), "VIN3", 35000.0, UUID.randomUUID(), SaleStatus.CANCELED, null);
         List<SaleOrder> expectedSales = Arrays.asList(sale1, sale2, sale3);
         when(saleRepositoryPort.getAllSales()).thenReturn(expectedSales);
 
@@ -60,7 +60,7 @@ class FindAllSalesUseCaseTest {
     @Test
     @DisplayName("Should call repository only once")
     void shouldCallRepositoryOnlyOnce() {
-        SaleOrder sale = new SaleOrder(1L, "John Doe", new CPF("12345678909"), "VIN1", 25000.0, UUID.randomUUID(), SaleStatus.PENDING);
+        SaleOrder sale = new SaleOrder(1L, "John Doe", new CPF("12345678909"), "VIN1", 25000.0, UUID.randomUUID(), SaleStatus.PENDING, null);
         List<SaleOrder> expectedSales = Collections.singletonList(sale);
         when(saleRepositoryPort.getAllSales()).thenReturn(expectedSales);
 

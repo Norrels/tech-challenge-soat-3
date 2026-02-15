@@ -85,7 +85,7 @@ class SaleControllerIntegrationTest {
                 .andExpect(jsonPath("$.vehicleVin").value("1HGBH41JXMN109186"))
                 .andExpect(jsonPath("$.salePrice").value(25000.0))
                 .andExpect(jsonPath("$.status").value("PENDING"))
-                .andExpect(jsonPath("$.vihicleId").exists());
+                .andExpect(jsonPath("$.vehicleId").exists());
     }
 
     @Test

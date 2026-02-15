@@ -3,6 +3,7 @@ package br.com.dealership.modules.sale.domain.entities;
 import br.com.dealership.modules.sale.domain.entities.valueobjects.CPF;
 import br.com.dealership.modules.sale.domain.exception.InvalidSaleException;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class SaleOrder {
@@ -11,18 +12,20 @@ public class SaleOrder {
     private CPF customerCpf;
     private String vehicleVin;
     private Double salePrice;
-    private UUID vihicleId;
+    private UUID vehicleId;
     private SaleStatus status;
+    private LocalDateTime saleDate;
 
 
-    public SaleOrder(Long id, String customerName, CPF customerCpf, String vehicleVin, Double salePrice, UUID vihicleId, SaleStatus status) {
+    public SaleOrder(Long id, String customerName, CPF customerCpf, String vehicleVin, Double salePrice, UUID vehicleId, SaleStatus status, LocalDateTime saleDate) {
         this.id = id;
         this.customerName = customerName;
         this.customerCpf = customerCpf;
         this.vehicleVin = vehicleVin;
         this.salePrice = salePrice;
-        this.vihicleId = vihicleId;
+        this.vehicleId = vehicleId;
         this.status = status;
+        this.saleDate = saleDate;
     }
 
     public CPF getCustomerCpf() {
@@ -65,12 +68,20 @@ public class SaleOrder {
         this.salePrice = salePrice;
     }
 
-    public UUID getVihicleId() {
-        return vihicleId;
+    public UUID getVehicleId() {
+        return vehicleId;
     }
 
-    public void setVihicleId(UUID vihicleId) {
-        this.vihicleId = vihicleId;
+    public void setVehicleId(UUID vehicleId) {
+        this.vehicleId = vehicleId;
+    }
+
+    public LocalDateTime getSaleDate() {
+        return saleDate;
+    }
+
+    public void setSaleDate(LocalDateTime saleDate) {
+        this.saleDate = saleDate;
     }
 
     public SaleStatus getStatus() {
@@ -94,7 +105,7 @@ public class SaleOrder {
             throw new InvalidSaleException("Vehicle VIN is required");
         }
 
-        if (vihicleId == null) {
+        if (vehicleId == null) {
             throw new InvalidSaleException("Vehicle ID is required");
         }
 
@@ -113,5 +124,6 @@ public class SaleOrder {
         }
 
         this.status = SaleStatus.COMPLETED;
+        this.saleDate = LocalDateTime.now();
     }
 }

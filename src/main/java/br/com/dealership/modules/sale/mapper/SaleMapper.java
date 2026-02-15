@@ -21,7 +21,8 @@ public class SaleMapper {
                 entity.getVehicleVin(),
                 entity.getSalePrice(),
                 entity.getVehicleId(),
-                entity.getStatus()
+                entity.getStatus(),
+                entity.getSaleDate()
         );
     }
 
@@ -36,8 +37,9 @@ public class SaleMapper {
                 saleOrder.getCustomerCpf(),
                 saleOrder.getVehicleVin(),
                 saleOrder.getSalePrice(),
-                saleOrder.getVihicleId(),
-                saleOrder.getStatus()
+                saleOrder.getVehicleId(),
+                saleOrder.getStatus(),
+                saleOrder.getSaleDate()
         );
     }
 
@@ -55,7 +57,8 @@ public class SaleMapper {
                 dto.getVehicleVin(),
                 dto.getSalePrice(),
                 null,
-                SaleStatus.PENDING
+                SaleStatus.PENDING,
+                null
         );
     }
 
